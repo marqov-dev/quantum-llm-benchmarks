@@ -18,14 +18,18 @@ class GoogleProvider(Provider):
         max_tokens: int,
         stop: list[str] | None,
     ) -> str:
-        config = types.GenerateContentConfig(
+        config_kwargs: dict = dict(
             temperature=temperature,
             max_output_tokens=max_tokens,
-            stop_sequences=stop or [],
         )
+        if stop:
+            config_kwargs["stop_sequences"] = stop
+        config = types.GenerateContentConfig(**config_kwargs)
         response = self._client.models.generate_content(
             model=model_id,
             contents=prompt,
             config=config,
         )
+        if not response.candidates:
+            return ""
         return response.text
