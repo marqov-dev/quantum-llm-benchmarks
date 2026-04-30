@@ -24,8 +24,11 @@ def load_suite(suite_path: Path) -> list[SuiteExample]:
     with suite_path.open() as f:
         for line in f:
             r = json.loads(line)
-            prompt = r.get("instruction") or r.get("prompt")
-            if prompt is None:
+            if "instruction" in r:
+                prompt = r["instruction"]
+            elif "prompt" in r:
+                prompt = r["prompt"]
+            else:
                 raise ValueError(f"Example {r.get('id')} has neither 'instruction' nor 'prompt' field")
             examples.append(SuiteExample(
                 id=r["id"],
