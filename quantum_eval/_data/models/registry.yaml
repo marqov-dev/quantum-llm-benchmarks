@@ -1,0 +1,149 @@
+# Model registry for quantum-llm-benchmarks.
+# Community members can open a PR to add a model.
+# provider: anthropic | openai | google | compat
+# api_key_env: environment variable name for the API key (use empty string for local Ollama)
+# base_url: required for compat provider; null uses the SDK default
+# temperature: per-model default. Will be superseded by methodology-locked value after methodology pass.
+# max_tokens: generation limit per example.
+
+models:
+  - id: claude-sonnet-4-6
+    label: "Claude Sonnet 4.6"
+    provider: anthropic
+    api_key_env: ANTHROPIC_API_KEY
+    base_url: null
+    temperature: 1.0
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Native Anthropic SDK."
+
+  - id: gemini-2.5-flash
+    label: "Gemini 2.5 Flash"
+    provider: google
+    api_key_env: GEMINI_API_KEY
+    base_url: null
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: gemini-2.5-pro
+    label: "Gemini 2.5 Pro"
+    provider: google
+    api_key_env: GEMINI_API_KEY
+    base_url: null
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Thinking model. Underperforms Flash on this benchmark."
+
+  - id: deepseek-chat
+    label: "DeepSeek V4 Pro"
+    provider: compat
+    base_url: "https://api.deepseek.com"
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: deepseek-chat-fast
+    label: "DeepSeek V4 Flash"
+    provider: compat
+    base_url: "https://api.deepseek.com"
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: moonshot-v1-8k
+    label: "Kimi K2.6"
+    provider: compat
+    base_url: "https://api.moonshot.ai/v1"
+    api_key_env: MOONSHOT_API_KEY
+    temperature: 1.0
+    max_tokens: 4096
+    max_retries: 2
+    notes: "temperature MUST be 1.0. Use moonshot.ai not moonshot.cn."
+
+  - id: qwen3-coder-plus
+    label: "Qwen3 Coder Plus"
+    provider: compat
+    base_url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    api_key_env: DASHSCOPE_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Use dashscope-intl endpoint, not dashscope.aliyuncs.com."
+
+  - id: qwen3-coder-480b-a35b-instruct
+    label: "Qwen3 Coder 480B"
+    provider: compat
+    base_url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    api_key_env: DASHSCOPE_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: codestral-latest
+    label: "Codestral"
+    provider: compat
+    base_url: "https://api.mistral.ai/v1"
+    api_key_env: MISTRAL_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: mistral-large-latest
+    label: "Mistral Large"
+    provider: compat
+    base_url: "https://api.mistral.ai/v1"
+    api_key_env: MISTRAL_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: openai/gpt-oss-20b
+    label: "GPT OSS 20B"
+    provider: compat
+    base_url: "https://api.groq.com/openai/v1"
+    api_key_env: GROQ_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: openai/gpt-oss-120b
+    label: "GPT OSS 120B"
+    provider: compat
+    base_url: "https://api.groq.com/openai/v1"
+    api_key_env: GROQ_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: meta-llama/llama-4-scout-17b-16e-instruct
+    label: "Llama 4 Scout"
+    provider: compat
+    base_url: "https://api.groq.com/openai/v1"
+    api_key_env: GROQ_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+
+  - id: qwen-14b-qiskit:latest
+    label: "IBM Qwen2.5-Coder-14B-Qiskit"
+    provider: compat
+    base_url: "http://localhost:11434/v1"
+    api_key_env: ""
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Requires Ollama running locally with model pulled."
+
+  - id: mistral-24b-qiskit:latest
+    label: "IBM Mistral-Small-3.2-24B-Qiskit"
+    provider: compat
+    base_url: "http://localhost:11434/v1"
+    api_key_env: ""
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Requires Ollama running locally with model pulled."
