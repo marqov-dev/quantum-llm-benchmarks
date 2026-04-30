@@ -91,7 +91,10 @@ def get_completed_ids(output_path: Path) -> set[str]:
             line = line.strip()
             if not line:
                 continue
-            record = json.loads(line)
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue  # skip corrupt line, keep accumulating good IDs
             if record.get("_header"):
                 continue
             if "id" in record:
@@ -107,7 +110,10 @@ def get_header_suite_hash(output_path: Path) -> str | None:
         first_line = f.readline().strip()
     if not first_line:
         return None
-    record = json.loads(first_line)
+    try:
+        record = json.loads(first_line)
+    except json.JSONDecodeError:
+        return None
     if record.get("_header"):
         return record.get("suite_hash")
     return None
