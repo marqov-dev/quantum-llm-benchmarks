@@ -73,3 +73,42 @@ def test_append_result_writes_json_line(tmp_path):
     assert record["syntax_pass"] is True
     assert record["semantic_pass"] is False
     assert record["error"] == "semantic mismatch"
+
+
+from quantum_eval.harness import get_completed_ids, get_header_suite_hash
+
+
+def test_get_completed_ids_skips_header(tmp_path):
+    out = tmp_path / "results.jsonl"
+    out.write_text(
+        '{"_header": true, "suite_hash": "sha256:abc"}\n'
+        '{"id": "qiskitHumanEval_0", "semantic_pass": true}\n'
+        '{"id": "qiskitHumanEval_1", "semantic_pass": false}\n'
+    )
+    ids = get_completed_ids(out)
+    assert ids == {"qiskitHumanEval_0", "qiskitHumanEval_1"}
+
+
+def test_get_completed_ids_empty_file(tmp_path):
+    out = tmp_path / "results.jsonl"
+    out.write_text("")
+    assert get_completed_ids(out) == set()
+
+
+def test_get_completed_ids_missing_file(tmp_path):
+    out = tmp_path / "nonexistent.jsonl"
+    assert get_completed_ids(out) == set()
+
+
+def test_get_header_suite_hash_returns_hash(tmp_path):
+    out = tmp_path / "results.jsonl"
+    out.write_text(
+        '{"_header": true, "suite_hash": "sha256:xyz789"}\n'
+        '{"id": "qiskitHumanEval_0"}\n'
+    )
+    assert get_header_suite_hash(out) == "sha256:xyz789"
+
+
+def test_get_header_suite_hash_missing_file(tmp_path):
+    out = tmp_path / "nonexistent.jsonl"
+    assert get_header_suite_hash(out) is None

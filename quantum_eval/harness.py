@@ -76,3 +76,38 @@ def append_result(
     }
     with output_path.open("a") as f:
         f.write(json.dumps(record) + "\n")
+
+
+def get_completed_ids(output_path: Path) -> set[str]:
+    """Return the set of example IDs already recorded in output_path.
+
+    Skips _header records. Returns empty set if file doesn't exist or is empty.
+    """
+    if not output_path.exists():
+        return set()
+    completed: set[str] = set()
+    with output_path.open() as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            if record.get("_header"):
+                continue
+            if "id" in record:
+                completed.add(record["id"])
+    return completed
+
+
+def get_header_suite_hash(output_path: Path) -> str | None:
+    """Return the suite_hash from the _header record of output_path, or None if absent."""
+    if not output_path.exists():
+        return None
+    with output_path.open() as f:
+        first_line = f.readline().strip()
+    if not first_line:
+        return None
+    record = json.loads(first_line)
+    if record.get("_header"):
+        return record.get("suite_hash")
+    return None
