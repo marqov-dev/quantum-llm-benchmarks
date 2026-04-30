@@ -13,7 +13,7 @@ def test_execution_failure_on_runtime_error():
         "category": "humaneval",
     })
     # Should pass syntax but fail execution
-    assert result.level_passed in (ValidationLevel.SYNTAX, ValidationLevel.NONE)
+    assert result.level_passed == ValidationLevel.SYNTAX
 
 
 def test_syntax_pass_with_valid_qiskit():

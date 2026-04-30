@@ -18,14 +18,6 @@ from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict, Any
 from enum import Enum
 
-try:
-    from tqdm import tqdm
-except ImportError:
-    # Fallback if tqdm not available
-    def tqdm(iterable, desc=None):
-        return iterable
-
-
 class ValidationLevel(Enum):
     NONE = 0
     SYNTAX = 1
