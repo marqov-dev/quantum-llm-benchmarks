@@ -25,7 +25,15 @@ class ModelConfig:
     max_retries: int
 
     def build_provider(self) -> Provider:
-        api_key = os.environ.get(self.api_key_env, "") if self.api_key_env else "ollama"
+        if self.api_key_env:
+            api_key = os.environ.get(self.api_key_env)
+            if not api_key:
+                raise EnvironmentError(
+                    f"Environment variable '{self.api_key_env}' is not set or empty. "
+                    f"Export it before running model '{self.id}'."
+                )
+        else:
+            api_key = "ollama"
         if self.provider_name == "anthropic":
             return AnthropicProvider(api_key=api_key)
         if self.provider_name == "openai":
@@ -56,8 +64,9 @@ def load_registry(registry_path: Path | None = None) -> list[ModelConfig]:
     ]
 
 
-def get_model(model_id: str, registry_path: Path | None = None) -> ModelConfig:
-    for config in load_registry(registry_path):
+def get_model(model_id: str, registry: list[ModelConfig] | None = None, registry_path: Path | None = None) -> ModelConfig:
+    configs = registry if registry is not None else load_registry(registry_path)
+    for config in configs:
         if config.id == model_id:
             return config
     raise KeyError(
