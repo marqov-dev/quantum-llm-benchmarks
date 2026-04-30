@@ -26,4 +26,4 @@ class AnthropicProvider(Provider):
         if stop is not None:
             kwargs["stop_sequences"] = stop
         message = self._client.messages.create(**kwargs)
-        return message.content[0].text
+        return message.content[0].text if message.content else ""

@@ -32,4 +32,7 @@ class GoogleProvider(Provider):
         )
         if not response.candidates:
             return ""
-        return response.text
+        candidate = response.candidates[0]
+        if not getattr(candidate, "content", None) or not getattr(candidate.content, "parts", None):
+            return ""
+        return "".join(p.text for p in candidate.content.parts if hasattr(p, "text"))

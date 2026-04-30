@@ -118,8 +118,12 @@ def test_openai_provider_generate():
 
 
 def test_google_provider_generate():
+    mock_part = MagicMock()
+    mock_part.text = "from qiskit import QuantumCircuit"
+    mock_candidate = MagicMock()
+    mock_candidate.content.parts = [mock_part]
     mock_response = MagicMock()
-    mock_response.text = "from qiskit import QuantumCircuit"
+    mock_response.candidates = [mock_candidate]
 
     with patch("quantum_eval.providers.google_provider.genai") as mock_genai:
         mock_client = MagicMock()
