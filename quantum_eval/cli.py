@@ -70,7 +70,11 @@ def cmd_run(args: argparse.Namespace) -> None:
         completed = set()
         write_header(output_path, suite=args.suite, suite_hash=suite_hash, model=args.model)
 
-    provider = model_config.build_provider()
+    try:
+        provider = model_config.build_provider()
+    except (EnvironmentError, ValueError) as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
     todo = [ex for ex in examples if ex.id not in completed]
     total = len(examples)
     done = len(completed)
@@ -97,10 +101,10 @@ def cmd_run(args: argparse.Namespace) -> None:
                 if attempt < model_config.max_retries:
                     print(f"(retry {attempt + 1}) ", end="", flush=True)
 
-        # validate_example returns (ValidationResult, Optional[str])
-        result, last_error = validate_example({"response": generated, "category": ex.category})
+        # validate_example returns (ValidationResult, extracted_code)
+        result, extracted_code = validate_example({"response": generated, "category": ex.category})
         # provider_error takes precedence: it tells us why we got empty output.
-        error = provider_error or last_error or result.error
+        error = provider_error or result.error
 
         append_result(
             output_path,
@@ -119,7 +123,6 @@ def cmd_run(args: argparse.Namespace) -> None:
 def cmd_publish(args: argparse.Namespace) -> None:
     import subprocess
     from quantum_eval.results import build_release_json
-    from quantum_eval.harness import get_header_suite_hash
 
     jsonl_path = Path(args.jsonl)
     if not jsonl_path.exists():
