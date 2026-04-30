@@ -707,15 +707,12 @@ def validate_example(
             error="No code block found in response"
         ), None
     
-    # Check for deprecated patterns
+    # Check for deprecated patterns — recorded as warnings, not failures.
+    # Hard-failing on deprecated patterns distorts benchmark results: code that
+    # runs correctly but uses an older API (e.g. Aer.get_backend()) should earn
+    # its execution and semantic points, not score zero on the leaderboard.
     deprecated_issues = check_deprecated_patterns(code)
-    if deprecated_issues:
-        return ValidationResult(
-            valid=False,
-            level_passed=ValidationLevel.NONE,
-            error=f"Deprecated patterns found: {'; '.join(deprecated_issues)}"
-        ), code
-    
+
     # Check for required patterns
     required_issues = check_required_patterns(code, category)
     # Required patterns are warnings, not failures
@@ -756,10 +753,10 @@ def validate_example(
             result = validate_test_code(code, test_code, timeout=semantic_timeout)
         else:
             result = validate_semantic(code, category, timeout=semantic_timeout)
-        result.warnings = (result.warnings or []) + required_issues
+        result.warnings = (result.warnings or []) + required_issues + deprecated_issues
         return result, code
-    
-    result.warnings = (result.warnings or []) + required_issues
+
+    result.warnings = (result.warnings or []) + required_issues + deprecated_issues
     return result, code
 
 
