@@ -122,9 +122,9 @@ def test_google_provider_generate():
     mock_response.text = "from qiskit import QuantumCircuit"
 
     with patch("quantum_eval.providers.google_provider.genai") as mock_genai:
-        mock_model = MagicMock()
-        mock_model.generate_content.return_value = mock_response
-        mock_genai.GenerativeModel.return_value = mock_model
+        mock_client = MagicMock()
+        mock_genai.Client.return_value = mock_client
+        mock_client.models.generate_content.return_value = mock_response
 
         provider = GoogleProvider(api_key="key-test")
         result = provider.generate(

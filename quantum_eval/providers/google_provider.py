@@ -1,4 +1,5 @@
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from quantum_eval.providers.base import Provider
 
 
@@ -6,7 +7,7 @@ class GoogleProvider(Provider):
     """Native Google GenAI SDK adapter for Gemini models."""
 
     def __init__(self, api_key: str) -> None:
-        genai.configure(api_key=api_key)
+        self._client = genai.Client(api_key=api_key)
 
     def generate(
         self,
@@ -17,11 +18,14 @@ class GoogleProvider(Provider):
         max_tokens: int,
         stop: list[str] | None,
     ) -> str:
-        generation_config = genai.types.GenerationConfig(
+        config = types.GenerateContentConfig(
             temperature=temperature,
             max_output_tokens=max_tokens,
             stop_sequences=stop or [],
         )
-        model = genai.GenerativeModel(model_id)
-        response = model.generate_content(prompt, generation_config=generation_config)
+        response = self._client.models.generate_content(
+            model=model_id,
+            contents=prompt,
+            config=config,
+        )
         return response.text

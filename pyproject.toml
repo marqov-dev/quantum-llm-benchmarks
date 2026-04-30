@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.91",
     "openai>=1.0",
-    "google-generativeai>=0.8",
+    "google-genai>=0.9",
     "scipy>=1.13",
     "pyyaml>=6.0",
     "qiskit>=2.0",
