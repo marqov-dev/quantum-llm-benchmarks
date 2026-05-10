@@ -22,6 +22,11 @@ SUITES = {
 }
 SUITE_SIZES = {"humaneval": 151}
 
+# Methodology-locked parameters applied when --leaderboard is set.
+# These must match METHODOLOGY.md exactly. Do not change without updating the doc.
+LEADERBOARD_TEMPERATURE = 0.0
+LEADERBOARD_STOP = ["\nclass ", "\ndef ", "\n#", "\nif __name__"]
+
 
 def cmd_list(args: argparse.Namespace) -> None:
     configs = load_registry()
@@ -75,6 +80,18 @@ def cmd_run(args: argparse.Namespace) -> None:
     except (EnvironmentError, ValueError) as e:
         print(str(e), file=sys.stderr)
         sys.exit(1)
+
+    if args.leaderboard:
+        temperature = LEADERBOARD_TEMPERATURE
+        stop = LEADERBOARD_STOP
+        print(
+            f"Leaderboard mode: temperature={temperature}, "
+            f"stop={stop} (see METHODOLOGY.md)"
+        )
+    else:
+        temperature = model_config.temperature
+        stop = None
+
     todo = [ex for ex in examples if ex.id not in completed]
     total = len(examples)
     done = len(completed)
@@ -90,9 +107,9 @@ def cmd_run(args: argparse.Namespace) -> None:
                 generated = provider.generate(
                     ex.prompt,
                     model_id=model_config.id,
-                    temperature=model_config.temperature,
+                    temperature=temperature,
                     max_tokens=model_config.max_tokens,
-                    stop=None,
+                    stop=stop,
                 )
                 provider_error = None
                 break
@@ -218,6 +235,9 @@ def main() -> None:
     run_p.add_argument("--resume", action="store_true", help="Resume interrupted run (ID-based)")
     run_p.add_argument("--force-mismatch", action="store_true",
                        help="Resume even if suite hash changed (results may be inconsistent)")
+    run_p.add_argument("--leaderboard", action="store_true",
+                       help="Enforce methodology-locked parameters (temperature=0, stop sequences). "
+                            "Required for results to be comparable to published leaderboard scores.")
 
     # publish
     pub_p = sub.add_parser("publish", help="Aggregate JSONL, commit JSON to main, cut release tag")
