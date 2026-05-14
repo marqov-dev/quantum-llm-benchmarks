@@ -181,6 +181,10 @@ def cmd_publish(args: argparse.Namespace) -> None:
     out_json.write_text(json.dumps(release, indent=2))
     print(f"Written: {out_json}")
 
+    latest_json = Path("results") / "latest.json"
+    latest_json.write_text(json.dumps(release, indent=2))
+    print(f"Written: {latest_json}")
+
     stats = release["models"][0]
     print(
         f"Semantic pass: {stats['semantic_pct']}% ({stats['semantic_pass']}/{stats['n_examples']}) "
@@ -194,7 +198,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
         )
 
     if not args.no_push:
-        subprocess.run(["git", "add", str(out_json)], check=True)
+        subprocess.run(["git", "add", str(out_json), str(latest_json)], check=True)
         subprocess.run(
             ["git", "commit", "-m",
              f"results: {args.tag} — {model_id} {stats['semantic_pct']}% semantic"],
