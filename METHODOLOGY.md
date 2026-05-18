@@ -17,7 +17,7 @@ This document defines the evaluation methodology for all results published to th
 | Shot count | Zero-shot |
 | Temperature | `0.0` (greedy decoding) |
 | max_tokens | `4096` |
-| Stop sequences | `["\nclass ", "\ndef ", "\n#", "\nif __name__"]` |
+| Stop sequences | None |
 | Self-correction retries | None (methodology). API error retries: 2 — these are infrastructure, not methodology. |
 
 **Rationale:**
@@ -25,7 +25,7 @@ This document defines the evaluation methodology for all results published to th
 - **No system prompt.** System prompt handling differs between providers (Anthropic's `system` parameter, OpenAI's system role message, Gemini's `system_instruction`). Embedding the instruction in the user turn ensures identical handling across all three native SDKs.
 - **Zero-shot.** All quantum-specific benchmarks in the literature (Qiskit HumanEval, QuanBench, QuanBench+) use zero-shot. Few-shot performance depends heavily on example selection, making cross-model comparison harder to defend.
 - **Temperature = 0.0 (greedy).** The field consensus for leaderboard comparison as of 2025–2026: BigCodeBench, EvalPlus, and QuanBench+ all use greedy decoding for their primary Pass@1 metric. Greedy is fully deterministic — running the same model twice produces the same score, which is the minimum bar for a reproducible public benchmark.
-- **Stop sequences.** Inherited from the original HumanEval benchmark (Chen et al., 2021). Prevents generation from continuing past the function body into unrelated top-level constructs.
+- **No stop sequences.** The original HumanEval stop sequences (`\ndef `, `\nclass `, `\n#`, `\nif __name__`) were designed for *code completion* tasks where the model continues inside a pre-given function signature. The Qiskit HumanEval uses natural-language prompts requiring complete programs — models must write `def` to produce any callable code. Applying `\ndef ` as a stop sequence prevents function definitions entirely and produces truncated imports that always fail execution. Stop sequences are replaced by the prompt prefix (instructs the model to write code only) and `max_tokens=4096` as the natural generation bound.
 
 ---
 

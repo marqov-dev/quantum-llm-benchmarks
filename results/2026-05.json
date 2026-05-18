@@ -1,0 +1,28 @@
+{
+  "version": "2026-05",
+  "published": "2026-05-18T07:13:07.329264+00:00",
+  "suite": "humaneval",
+  "suite_hash": "sha256:0e46ce03acb2985af1ccfc64174a818e8753a5d3f875e17ee72dedb4e2f1a21c",
+  "n_examples": 151,
+  "complete": true,
+  "models": [
+    {
+      "id": "claude-sonnet-4-6",
+      "label": "Claude Sonnet 4.6",
+      "provider": "anthropic",
+      "syntax_pass": 151,
+      "syntax_pct": 100,
+      "syntax_ci_low": 98,
+      "syntax_ci_high": 100,
+      "execution_pass": 108,
+      "execution_pct": 72,
+      "execution_ci_low": 64,
+      "execution_ci_high": 78,
+      "semantic_pass": 102,
+      "semantic_pct": 68,
+      "semantic_ci_low": 60,
+      "semantic_ci_high": 75,
+      "n_examples": 151
+    }
+  ]
+}

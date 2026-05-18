@@ -25,7 +25,8 @@ SUITE_SIZES = {"humaneval": 151}
 # Methodology-locked parameters applied when --leaderboard is set.
 # These must match METHODOLOGY.md exactly. Do not change without updating the doc.
 LEADERBOARD_TEMPERATURE = 0.0
-LEADERBOARD_STOP = ["\nclass ", "\ndef ", "\n#", "\nif __name__"]
+LEADERBOARD_STOP = None  # No stop sequences: Qiskit HumanEval is generation not completion
+LEADERBOARD_PROMPT_PREFIX = "Write executable Qiskit code only. Do not include explanations or markdown.\n\n"
 
 
 def cmd_list(args: argparse.Namespace) -> None:
@@ -84,13 +85,15 @@ def cmd_run(args: argparse.Namespace) -> None:
     if args.leaderboard:
         temperature = LEADERBOARD_TEMPERATURE
         stop = LEADERBOARD_STOP
+        prompt_prefix = LEADERBOARD_PROMPT_PREFIX
         print(
             f"Leaderboard mode: temperature={temperature}, "
-            f"stop={stop} (see METHODOLOGY.md)"
+            f"prompt_prefix applied, stop=None (see METHODOLOGY.md)"
         )
     else:
         temperature = model_config.temperature
         stop = None
+        prompt_prefix = ""
 
     todo = [ex for ex in examples if ex.id not in completed]
     total = len(examples)
@@ -105,7 +108,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         for attempt in range(model_config.max_retries + 1):
             try:
                 generated = provider.generate(
-                    ex.prompt,
+                    prompt_prefix + ex.prompt,
                     model_id=model_config.id,
                     temperature=temperature,
                     max_tokens=model_config.max_tokens,
