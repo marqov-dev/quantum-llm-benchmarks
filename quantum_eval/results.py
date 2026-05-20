@@ -102,3 +102,48 @@ def build_release_json(
             }
         ],
     }
+
+
+def build_multi_release_json(
+    *,
+    model_specs: list[dict],
+    version: str,
+    suite: str,
+    suite_hash: str,
+    expected_n: int,
+) -> dict:
+    """Build a versioned release JSON aggregating multiple model JSONL files.
+
+    Each entry in model_specs must have keys:
+      jsonl_path, model_id, model_label, provider
+
+    Models are sorted by semantic_pct descending.
+    complete=True only if every model has n_examples == expected_n.
+    """
+    model_entries = []
+    all_complete = True
+    for spec in model_specs:
+        stats = aggregate_jsonl(spec["jsonl_path"])
+        if stats["n_examples"] != expected_n:
+            all_complete = False
+        model_entries.append(
+            {
+                "id": spec["model_id"],
+                "label": spec["model_label"],
+                "provider": spec["provider"],
+                **{k: v for k, v in stats.items() if k != "n_examples"},
+                "n_examples": stats["n_examples"],
+            }
+        )
+
+    model_entries.sort(key=lambda x: x["semantic_pct"], reverse=True)
+
+    return {
+        "version": version,
+        "published": datetime.now(timezone.utc).isoformat(),
+        "suite": suite,
+        "suite_hash": suite_hash,
+        "n_examples": expected_n,
+        "complete": all_complete,
+        "models": model_entries,
+    }

@@ -142,40 +142,46 @@ def cmd_run(args: argparse.Namespace) -> None:
 
 def cmd_publish(args: argparse.Namespace) -> None:
     import subprocess
-    from quantum_eval.results import build_release_json
+    from quantum_eval.results import build_multi_release_json
 
-    jsonl_path = Path(args.jsonl)
-    if not jsonl_path.exists():
-        print(f"File not found: {jsonl_path}", file=sys.stderr)
-        sys.exit(1)
+    jsonl_paths = [Path(p) for p in args.jsonl]
+    for p in jsonl_paths:
+        if not p.exists():
+            print(f"File not found: {p}", file=sys.stderr)
+            sys.exit(1)
 
-    with jsonl_path.open() as f:
-        header = json.loads(f.readline())
-
-    model_id = header.get("model", args.model_id or "unknown")
-    suite_name = header.get("suite", "humaneval")
-    suite_hash = get_header_suite_hash(jsonl_path) or "unknown"
+    # Infer suite from the first file's header; all files must share the same suite.
+    with jsonl_paths[0].open() as f:
+        first_header = json.loads(f.readline())
+    suite_name = first_header.get("suite", "humaneval")
+    suite_hash = get_header_suite_hash(jsonl_paths[0]) or "unknown"
     if suite_name not in SUITE_SIZES:
         print(f"Unknown suite '{suite_name}' in JSONL header. Cannot verify completeness.", file=sys.stderr)
         sys.exit(1)
     expected_n = SUITE_SIZES[suite_name]
 
-    try:
-        model_config = get_model(model_id)
-        label = model_config.label
-        provider = model_config.provider_name
-    except KeyError:
-        label = model_id
-        provider = "unknown"
+    registry = load_registry()
+    model_specs = []
+    for p in jsonl_paths:
+        with p.open() as f:
+            header = json.loads(f.readline())
+        model_id = header.get("model", "unknown")
+        try:
+            cfg = get_model(model_id, registry=registry)
+            label = cfg.label
+            provider = cfg.provider_name
+        except KeyError:
+            label = model_id
+            provider = "unknown"
+        model_specs.append(
+            {"jsonl_path": p, "model_id": model_id, "model_label": label, "provider": provider}
+        )
 
-    release = build_release_json(
-        jsonl_path=jsonl_path,
+    release = build_multi_release_json(
+        model_specs=model_specs,
         version=args.tag,
         suite=suite_name,
         suite_hash=suite_hash,
-        model_id=model_id,
-        model_label=label,
-        provider=provider,
         expected_n=expected_n,
     )
 
@@ -188,30 +194,31 @@ def cmd_publish(args: argparse.Namespace) -> None:
     latest_json.write_text(json.dumps(release, indent=2))
     print(f"Written: {latest_json}")
 
-    stats = release["models"][0]
-    print(
-        f"Semantic pass: {stats['semantic_pct']}% ({stats['semantic_pass']}/{stats['n_examples']}) "
-        f"[{stats['semantic_ci_low']}%–{stats['semantic_ci_high']}% CI]"
-    )
-    if not release["complete"]:
+    print(f"\n{'Model':<35} {'Semantic':>10} {'n':>6}")
+    print("-" * 55)
+    for m in release["models"]:
         print(
-            f"Warning: Partial run: {stats['n_examples']}/{expected_n} examples. "
-            "release JSON has complete=false.",
-            file=sys.stderr,
+            f"{m['label']:<35} {m['semantic_pct']:>9}%  "
+            f"({m['semantic_pass']}/{m['n_examples']}) "
+            f"[{m['semantic_ci_low']}–{m['semantic_ci_high']}% CI]"
         )
+    if not release["complete"]:
+        print("\nWarning: One or more models have incomplete runs (complete=false).", file=sys.stderr)
 
     if not args.no_push:
+        n_models = len(release["models"])
+        top = release["models"][0]
         subprocess.run(["git", "add", str(out_json), str(latest_json)], check=True)
         subprocess.run(
             ["git", "commit", "-m",
-             f"results: {args.tag} — {model_id} {stats['semantic_pct']}% semantic"],
+             f"results: {args.tag} — {n_models} models, top {top['label']} {top['semantic_pct']}% semantic"],
             check=True,
         )
-        subprocess.run(["git", "tag", args.tag], check=True)
-        subprocess.run(["git", "push", "origin", "main", "--tags"], check=True)
-        print(f"Published: tag {args.tag} pushed to origin.")
+        subprocess.run(["git", "tag", "-f", args.tag], check=True)
+        subprocess.run(["git", "push", "origin", "main", "--tags", "--force"], check=True)
+        print(f"\nPublished: tag {args.tag} pushed to origin.")
     else:
-        print(f"--no-push: skipped git commit/tag/push. JSON written to {out_json}.")
+        print(f"\n--no-push: skipped git commit/tag/push. JSON written to {out_json}.")
 
 
 def cmd_merge(args: argparse.Namespace) -> None:
@@ -247,10 +254,9 @@ def main() -> None:
                             "Required for results to be comparable to published leaderboard scores.")
 
     # publish
-    pub_p = sub.add_parser("publish", help="Aggregate JSONL, commit JSON to main, cut release tag")
-    pub_p.add_argument("jsonl", help="Path to the result JSONL file")
-    pub_p.add_argument("--tag", required=True, help="Version tag e.g. 2026-04")
-    pub_p.add_argument("--model-id", dest="model_id", help="Override model ID if not in JSONL header")
+    pub_p = sub.add_parser("publish", help="Aggregate JSONL(s), commit JSON to main, cut release tag")
+    pub_p.add_argument("jsonl", nargs="+", help="Path(s) to result JSONL file(s) — one per model")
+    pub_p.add_argument("--tag", required=True, help="Version tag e.g. 2026-05")
     pub_p.add_argument("--no-push", action="store_true", help="Write JSON but skip git commit/tag/push")
 
     # merge (stub)

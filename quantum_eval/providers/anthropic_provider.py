@@ -1,4 +1,4 @@
-from anthropic import Anthropic
+from anthropic import Anthropic, BadRequestError
 from quantum_eval.providers.base import Provider
 
 
@@ -25,5 +25,13 @@ class AnthropicProvider(Provider):
         )
         if stop is not None:
             kwargs["stop_sequences"] = stop
-        message = self._client.messages.create(**kwargs)
+        try:
+            message = self._client.messages.create(**kwargs)
+        except BadRequestError as e:
+            if "temperature" in str(e) and "deprecated" in str(e):
+                # Some models (e.g. Opus 4.7) don't accept a temperature parameter.
+                kwargs.pop("temperature")
+                message = self._client.messages.create(**kwargs)
+            else:
+                raise
         return message.content[0].text if message.content else ""

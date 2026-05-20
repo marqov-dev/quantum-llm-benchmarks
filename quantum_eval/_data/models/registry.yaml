@@ -7,6 +7,26 @@
 # max_tokens: generation limit per example.
 
 models:
+  - id: claude-opus-4-7
+    label: "Claude Opus 4.7"
+    provider: anthropic
+    api_key_env: ANTHROPIC_API_KEY
+    base_url: null
+    temperature: 1.0
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Native Anthropic SDK."
+
+  - id: claude-opus-4-6
+    label: "Claude Opus 4.6"
+    provider: anthropic
+    api_key_env: ANTHROPIC_API_KEY
+    base_url: null
+    temperature: 1.0
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Native Anthropic SDK."
+
   - id: claude-sonnet-4-6
     label: "Claude Sonnet 4.6"
     provider: anthropic
@@ -36,7 +56,7 @@ models:
     max_retries: 2
     notes: "Thinking model. Underperforms Flash on this benchmark."
 
-  - id: deepseek-chat
+  - id: deepseek-v4-pro
     label: "DeepSeek V4 Pro"
     provider: compat
     base_url: "https://api.deepseek.com"
@@ -45,7 +65,7 @@ models:
     max_tokens: 4096
     max_retries: 2
 
-  - id: deepseek-chat-fast
+  - id: deepseek-v4-flash
     label: "DeepSeek V4 Flash"
     provider: compat
     base_url: "https://api.deepseek.com"
@@ -128,6 +148,16 @@ models:
     max_tokens: 4096
     max_retries: 2
 
+  - id: google/gemma-4-31B-it
+    label: "Gemma 4 31B"
+    provider: compat
+    base_url: "https://api-inference.huggingface.co/v1"
+    api_key_env: HF_API_KEY
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+    notes: "HuggingFace Serverless Inference API."
+
   - id: qwen-14b-qiskit:latest
     label: "IBM Qwen2.5-Coder-14B-Qiskit"
     provider: compat
@@ -140,6 +170,16 @@ models:
 
   - id: mistral-24b-qiskit:latest
     label: "IBM Mistral-Small-3.2-24B-Qiskit"
+    provider: compat
+    base_url: "http://localhost:11434/v1"
+    api_key_env: ""
+    temperature: 0.2
+    max_tokens: 4096
+    max_retries: 2
+    notes: "Requires Ollama running locally with model pulled."
+
+  - id: gemma4:latest
+    label: "Gemma 4 12B"
     provider: compat
     base_url: "http://localhost:11434/v1"
     api_key_env: ""
