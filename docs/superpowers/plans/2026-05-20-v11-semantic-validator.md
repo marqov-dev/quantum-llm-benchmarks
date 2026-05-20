@@ -445,26 +445,27 @@ def test_validate_kl_divergence_matching_circuits():
 
 
 def test_validate_kl_divergence_wrong_circuit():
-    """Wrong circuit should KL-fail."""
+    """Wrong circuit: evaluated successfully but distributions diverge — passed=False (not None)."""
     result = validate_kl_divergence(
         generated_code=ZERO_STATE,
         canonical_code=BELL_PROMPT + BELL_CANONICAL,
         entry_point="create_bell_state",
         seed=42,
     )
-    assert result.passed is False
+    assert result.passed is False   # False = divergent (could evaluate, wrong answer)
+    assert result.kl_divergence is not None
     assert result.kl_divergence > 0.05
 
 
 def test_validate_kl_divergence_bad_generated_code():
-    """Non-executable generated code returns error, does not raise."""
+    """Non-executable code: couldn't evaluate — passed=None, not False."""
     result = validate_kl_divergence(
         generated_code="this is not python!!!!",
         canonical_code=BELL_PROMPT + BELL_CANONICAL,
         entry_point="create_bell_state",
         seed=42,
     )
-    assert result.passed is False
+    assert result.passed is None    # None = couldn't evaluate (distinct from divergent)
     assert result.error is not None
 
 
@@ -490,6 +491,15 @@ def test_run_canonical_circuit_different_seeds_differ():
     # KL between two independent runs of the same circuit should be small but non-zero
     kl = kl_divergence(d1, d2)
     assert kl < 0.05  # sampling noise only
+
+
+def test_run_circuit_handles_print_in_generated_code():
+    """Generated code with print() statements must not break JSON parsing."""
+    code_with_print = BELL_STATE + '\nprint("debug: circuit ready")\nprint(42)\n'
+    counts = run_circuit_and_get_counts(code_with_print, shots=1024, seed=42)
+    total = sum(counts.values())
+    assert total == 1024
+    assert set(counts.keys()).issubset({"00", "11"})
 
 
 def test_run_circuit_normalises_multi_register_keys():
@@ -633,13 +643,20 @@ print(json.dumps({{"counts": _counts, "total": _total}}))
 
 @dataclass
 class KLResult:
-    passed: bool
+    passed: Optional[bool]   # True=pass, False=divergent, None=couldn't evaluate (error)
     kl_divergence: Optional[float]
     error: Optional[str] = None
 
 
 def _run_template(template: str, code: str, entry_point: str, shots: int, seed: int) -> dict[str, float]:
-    """Execute a runner template in a subprocess. Returns normalised probability dict."""
+    """Execute a runner template in a subprocess. Returns normalised probability dict.
+
+    JSON parsing: scans stdout lines in reverse to find the runner's JSON output.
+    Generated code may contain print() calls that land on stdout before the JSON line.
+    json.loads(full_stdout) would raise JSONDecodeError on those rows — silently
+    degrading Approach B on any model that added debug prints, circuit diagrams, etc.
+    Reverse iteration is O(1) for the common case (runner JSON is always the last line).
+    """
     runner = template.format(code=code, entry_point=entry_point, shots=shots, seed=seed)
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as f:
         f.write(runner)
@@ -648,11 +665,23 @@ def _run_template(template: str, code: str, entry_point: str, shots: int, seed: 
         result = subprocess.run(
             [sys.executable, str(tmp)],
             capture_output=True, text=True, timeout=60,
+            errors="replace",  # avoid UnicodeDecodeError if model emits non-UTF-8
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip()[-500:] or "non-zero exit")
         import json as _json
-        data = _json.loads(result.stdout.strip())
+        data = None
+        for line in reversed(result.stdout.strip().splitlines()):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = _json.loads(line)
+                break
+            except _json.JSONDecodeError:
+                continue
+        if data is None:
+            raise RuntimeError("no parseable JSON in subprocess output")
         if "error" in data:
             raise RuntimeError(data["error"])
         counts = data["counts"]
@@ -725,14 +754,16 @@ def validate_kl_divergence(
     try:
         ref_dist = _run_template(_REF_RUNNER, canonical_code, entry_point, shots, seed)
     except Exception as e:
-        return KLResult(passed=False, kl_divergence=None, error=f"Reference circuit error: {e}")
+        # passed=None: couldn't evaluate (not the same as "evaluated and divergent")
+        return KLResult(passed=None, kl_divergence=None, error=f"Reference circuit error: {e}")
 
     try:
         gen_dist = _run_template(_GEN_RUNNER, generated_code, entry_point, shots, seed)
     except Exception as e:
-        return KLResult(passed=False, kl_divergence=None, error=f"Generated circuit error: {e}")
+        return KLResult(passed=None, kl_divergence=None, error=f"Generated circuit error: {e}")
 
     kl = kl_divergence(gen_dist, ref_dist)
+    # passed=True: distributions agree within tau; passed=False: evaluated but divergent
     return KLResult(passed=kl < tau, kl_divergence=round(kl, 6))
 ```
 
@@ -1113,8 +1144,9 @@ def rescore_file(jsonl_path: Path, suite_index: dict, v11_suite_hash: str) -> Pa
                 try:
                     ut_result = validate_test_code(code_for_test, test_code, timeout=60)
                     unit_test_pass = ut_result.level_passed.value >= ValidationLevel.SEMANTIC.value
-                except Exception:
-                    unit_test_pass = False
+                except Exception as e:
+                    unit_test_pass = None  # None = couldn't evaluate; False = ran and failed
+                    record["unit_test_error"] = str(e)
             record["unit_test_pass"] = unit_test_pass
 
             # --- Approach B: KL divergence ---
@@ -1306,13 +1338,19 @@ def model_label(path: Path) -> str:
 
 
 def agreement_matrix(rows: list[dict]) -> dict:
+    # Only include rows where BOTH methods produced a definitive result (True or False).
+    # None = couldn't evaluate (error/timeout). Excluding these means "both_fail" in the
+    # matrix genuinely means "ran and failed" — not "one or both errored out."
+    # Track n_errored separately so METHODOLOGY.md can report error rates alongside agreement.
     valid = [r for r in rows
              if r.get("unit_test_pass") is not None and r.get("kl_pass") is not None]
+    n_errored = len(rows) - len(valid)
     aa = sum(1 for r in valid if r["unit_test_pass"] and r["kl_pass"])
     ab = sum(1 for r in valid if r["unit_test_pass"] and not r["kl_pass"])
     ba = sum(1 for r in valid if not r["unit_test_pass"] and r["kl_pass"])
     bb = sum(1 for r in valid if not r["unit_test_pass"] and not r["kl_pass"])
-    return {"both_pass": aa, "a_only": ab, "b_only": ba, "both_fail": bb, "n": len(valid)}
+    return {"both_pass": aa, "a_only": ab, "b_only": ba, "both_fail": bb,
+            "n": len(valid), "n_errored": n_errored}
 
 
 def cohens_kappa(mat: dict) -> float:
@@ -1415,6 +1453,8 @@ def main():
 
     print("\n" + "=" * 105)
     print(f"Overall ({len(all_rows)} examples across {len(files)} models):")
+    print(f"  Evaluable (both methods ran):  {overall['n']:>5}  {pct(overall['n'], len(all_rows))}")
+    print(f"  Errored (>=1 method failed):   {overall['n_errored']:>5}  {pct(overall['n_errored'], len(all_rows))}")
     print(f"  Both pass (A∩B):     {overall['both_pass']:>5}  {pct(overall['both_pass'], overall['n'])}")
     print(f"  A only (unit test):  {overall['a_only']:>5}  {pct(overall['a_only'], overall['n'])}")
     print(f"  B only (KL div):     {overall['b_only']:>5}  {pct(overall['b_only'], overall['n'])}")
@@ -1454,7 +1494,7 @@ def main():
     out = Path("results/v11_analysis.json")
     out.write_text(json.dumps({
         "model_stats": model_stats,
-        "overall_matrix": overall,
+        "overall_matrix": overall,  # n = evaluable rows only; n_errored = rows where ≥1 method failed
         "cohens_kappa": kappa_all,
         "mcnemar_p": p_all,
         "phi_coefficients": {
@@ -1536,6 +1576,17 @@ result sets (2,416 data points). Disagreements are analysed with:
 - McNemar's test (asymmetry between A-only and B-only cases)
 - `defines_entry_point` split (isolates format-mismatch effect from genuine disagreement)
 
+**Pass/fail/error semantics:** Each validator records three states: `True` (passed),
+`False` (ran successfully but answer is wrong), `None` (could not evaluate — execution
+error, timeout, or no circuit found). Agreement matrix denominators include only rows
+where both methods produced a definitive result. Error rates are reported separately.
+
+**Partial measurement:** If generated code measures fewer qubits than the canonical
+solution, the KL divergence is computed over different key spaces. With additive
+smoothing, this typically produces a high divergence and a `False` result. This is
+defensible — they are not computing the same observable — but a high failure rate on
+such rows reflects measurement convention mismatch rather than algorithmic error.
+
 ### v1.1 leaderboard columns
 
 Two new columns alongside the existing `semantic_pct`:
@@ -1583,6 +1634,16 @@ git commit -m "docs: METHODOLOGY.md v1.1 — unit test and KL divergence approac
 - ✅ Per-example phi coefficient (n=2,416) not per-model (n=16)
 - ✅ Calibration task inserted before full rescore
 - ✅ τ verified empirically before use
+
+**Reviewer issues addressed (v5 review):**
+- ✅ stdout JSON parsing: reverse-iterate lines to find last valid JSON — survives print() in generated code
+- ✅ Test added: `test_run_circuit_handles_print_in_generated_code` confirms print() doesn't break parsing
+- ✅ `errors="replace"` on subprocess.run — UnicodeDecodeError from non-UTF-8 output fails gracefully
+- ✅ `kl_pass` and `unit_test_pass` use three-state semantics: `True`=pass, `False`=divergent/failed, `None`=couldn't evaluate
+- ✅ `unit_test_pass=None` (not False) on exception, with `unit_test_error` recorded
+- ✅ Agreement matrix denominator: only rows where both methods ran; `n_errored` tracked separately
+- ✅ Analysis output reports evaluable vs errored row counts
+- ✅ METHODOLOGY.md template documents None semantics and partial-measurement behavior
 
 **Reviewer issues addressed (v4 review):**
 - ✅ `validate_test_code` failure branch: explicit Task 1.5 block with implementation instructions if API check fails
