@@ -50,11 +50,38 @@ IBM's `qiskit-community/qiskit-human-eval` dataset fields per problem:
 
 ---
 
-## Task 1: Verify QuanBench+ citation
+## Task 1: Pre-flight checks
 
-Before any implementation, verify the specific numbers that will go into METHODOLOGY.md.
+Two cheap checks before any implementation. Either can block later tasks if they fail.
 
-- [ ] **Step 1: Check the QuanBench+ paper**
+- [ ] **Step 1: Verify the validator API exists**
+
+```bash
+.venv/bin/python -c "from quantum_eval.validator import validate_test_code, ValidationLevel; print('OK', ValidationLevel.SEMANTIC.value)"
+```
+
+Expected: `OK 3` (or whatever the integer value is). If this errors, `validate_test_code` is not yet implemented and Task 6 needs an additional step to add it before the rescore can use it. Do not proceed to Task 6 without this passing.
+
+- [ ] **Step 2: Inspect a stored generated_code field for markdown fences**
+
+`defines_entry_point_fn` and `synthesise_wrapper` both call `ast.parse` on stored `generated_code`. If the field contains raw model output (with ` ```python ... ``` ` fences or prose), `ast.parse` will fail and every row gets `defines_entry_point=False`.
+
+```bash
+.venv/bin/python -c "
+import json
+from pathlib import Path
+path = Path('results/claude-sonnet-4-6_humaneval.jsonl')
+rows = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+results = [r for r in rows if not r.get('_header')]
+code = results[0].get('generated_code', '')
+print('First 200 chars:', repr(code[:200]))
+print('Has fences:', '\`\`\`' in code)
+"
+```
+
+If `generated_code` contains fences: add a code-extraction step in `rescore_v11.py` before calling `defines_entry_point_fn` or `synthesise_wrapper`. The existing `validate_example` extractor in `validator.py` handles this — check its interface and use it.
+
+- [ ] **Step 3: Verify QuanBench+ citation**
 
 Fetch arXiv:2604.08570 and confirm:
 - Is τ=0.05 stated explicitly in the paper?
@@ -63,9 +90,9 @@ Fetch arXiv:2604.08570 and confirm:
 
 Record the exact quote and section number. If the values are not confirmed, use them as reasonable defaults but attribute as "following QuanBench+ methodology" rather than "QuanBench+ calibrated values."
 
-- [ ] **Step 2: Note findings**
+- [ ] **Step 4: Note findings**
 
-Update the comment in `kl_validator.py` (Task 3) with the verified citation before committing.
+Update the comment in `kl_validator.py` (Task 4) with the verified citation before committing.
 
 ---
 
@@ -336,6 +363,7 @@ Additional fixes applied here:
 import pytest
 from quantum_eval.kl_validator import (
     run_circuit_and_get_counts,
+    run_canonical_circuit,
     kl_divergence,
     validate_kl_divergence,
     KLResult,
@@ -425,6 +453,30 @@ def test_validate_kl_divergence_bad_generated_code():
     )
     assert result.passed is False
     assert result.error is not None
+
+
+def test_run_canonical_circuit_calls_entry_point():
+    """run_canonical_circuit must call entry_point() — not just define it."""
+    counts = run_canonical_circuit(
+        BELL_PROMPT + BELL_CANONICAL,
+        entry_point="create_bell_state",
+        shots=1024,
+        seed=42,
+    )
+    total = sum(counts.values())
+    assert total == 1024
+    assert set(counts.keys()).issubset({"00", "11"})
+
+
+def test_run_canonical_circuit_different_seeds_differ():
+    """Two seeds should produce different (but valid) distributions."""
+    d1 = run_canonical_circuit(BELL_PROMPT + BELL_CANONICAL, entry_point="create_bell_state", shots=1024, seed=1)
+    d2 = run_canonical_circuit(BELL_PROMPT + BELL_CANONICAL, entry_point="create_bell_state", shots=1024, seed=2)
+    assert sum(d1.values()) == pytest.approx(1.0, abs=0.01)
+    assert sum(d2.values()) == pytest.approx(1.0, abs=0.01)
+    # KL between two independent runs of the same circuit should be small but non-zero
+    kl = kl_divergence(d1, d2)
+    assert kl < 0.05  # sampling noise only
 
 
 def test_run_circuit_normalises_multi_register_keys():
@@ -603,13 +655,30 @@ def run_circuit_and_get_counts(
     seed: int = DEFAULT_SEED,
     entry_point: str = "",
 ) -> dict[str, float]:
-    """Run code in subprocess; return normalised probability dict.
+    """Run code in subprocess using the generated-code runner; return normalised probability dict.
 
     If entry_point is given and defined in the code, calls it to get the circuit.
     Otherwise scans locals for QuantumCircuit objects.
     Raises RuntimeError on failure.
     """
     return _run_template(_GEN_RUNNER, code, entry_point, shots, seed)
+
+
+def run_canonical_circuit(
+    canonical_code: str,
+    entry_point: str,
+    shots: int = DEFAULT_SHOTS,
+    seed: int = DEFAULT_SEED,
+) -> dict[str, float]:
+    """Run canonical code using the reference runner; return normalised probability dict.
+
+    canonical_code should be prompt + canonical_solution (a complete function definition).
+    Calls entry_point() to obtain the circuit — does NOT scan locals.
+    This is what the calibration script uses: run twice with different seeds to
+    measure sampling noise, not model error.
+    Raises RuntimeError on failure.
+    """
+    return _run_template(_REF_RUNNER, canonical_code, entry_point, shots, seed)
 
 
 def kl_divergence(p: dict[str, float], q: dict[str, float]) -> float:
@@ -689,23 +758,32 @@ git commit -m "feat: KL divergence validator (Approach B) with entry_point runne
 ```python
 #!/usr/bin/env python3
 """
-Calibration: run each canonical solution against itself N times.
-Characterises the noise floor of KL divergence at 1024 shots.
+Calibration: measure KL divergence between two independent runs of the same
+canonical circuit (different seeds, same code). This is the sampling noise floor —
+the baseline divergence you'd get even with a perfectly correct model.
 
 If the 95th percentile KL exceeds tau=0.05, either increase shots or raise tau.
+
+IMPORTANT: Do NOT use validate_kl_divergence(code, code, seed=i) for this.
+That function passes the same seed to both runners, giving identical distributions
+and KL≈0. We need KL(P_seed_i ‖ P_seed_j) — two independent samples of the same ideal
+distribution. Use run_canonical_circuit() directly.
 """
+import itertools
 import json
+import random
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from quantum_eval.kl_validator import validate_kl_divergence, TAU
+from quantum_eval.kl_validator import run_canonical_circuit, kl_divergence, TAU
 
 SUITE_PATH = Path("quantum_eval/_data/benchmarks/humaneval/humaneval.jsonl")
-N_RUNS = 5        # runs per example (pairs = N*(N-1)/2)
+N_RUNS = 5        # runs per example; pairs = N*(N-1)/2 = 10
 SHOTS = 1024
-MAX_EXAMPLES = 30  # calibrate on first 30 examples (representative sample)
+MAX_EXAMPLES = 30  # calibrate on a random sample (see stratification note below)
+SAMPLE_SEED = 42   # for reproducible random.sample
 
 
 def load_examples(suite_path: Path):
@@ -725,44 +803,44 @@ def build_canonical_code(ex: dict) -> str:
 
 
 def main():
-    examples = load_examples(SUITE_PATH)[:MAX_EXAMPLES]
-    print(f"Calibrating on {len(examples)} examples, {N_RUNS} runs each...")
+    examples = load_examples(SUITE_PATH)
+    # Use random.sample rather than first-N: qubit count and circuit complexity
+    # vary across the suite, and 2-qubit circuits tell you nothing about 8-qubit noise.
+    rng = random.Random(SAMPLE_SEED)
+    sample = rng.sample(examples, min(MAX_EXAMPLES, len(examples)))
+    print(f"Calibrating on {len(sample)} examples (random sample, seed={SAMPLE_SEED}), {N_RUNS} runs each...")
 
     all_kl = []
-    per_qubit: dict[int, list[float]] = {}
 
-    for ex in examples:
+    for ex in sample:
         canonical_code = build_canonical_code(ex)
         entry_point = ex["entry_point"]
         kl_values = []
 
-        # Run N times with different seeds, compute KL between all pairs
+        # Run the same canonical circuit N times with different seeds.
+        # Compute KL between every pair of independent runs.
+        # This measures sampling noise, not model error.
         seeds = list(range(N_RUNS))
-        for i in range(N_RUNS):
-            for j in range(i + 1, N_RUNS):
-                r = validate_kl_divergence(
-                    canonical_code, canonical_code,
-                    entry_point=entry_point,
-                    shots=SHOTS, tau=9999,  # disable threshold — we want raw KL
-                    seed=seeds[i],
+        distributions = {}
+        for seed in seeds:
+            try:
+                distributions[seed] = run_canonical_circuit(
+                    canonical_code, entry_point=entry_point, shots=SHOTS, seed=seed
                 )
-                # Second run uses different seed to get independent sample
-                r2 = validate_kl_divergence(
-                    canonical_code, canonical_code,
-                    entry_point=entry_point,
-                    shots=SHOTS, tau=9999,
-                    seed=seeds[j],
-                )
-                # Compare two independent samples of same circuit
-                if r.kl_divergence is not None and r2.kl_divergence is not None:
-                    kl_values.append(abs(r.kl_divergence - r2.kl_divergence))
+            except Exception as e:
+                print(f"  {ex['id']} seed={seed}: FAILED ({e})")
+
+        for i, j in itertools.combinations(seeds, 2):
+            if i in distributions and j in distributions:
+                kl_values.append(kl_divergence(distributions[i], distributions[j]))
 
         if kl_values:
-            print(f"  {ex['id']}: median_kl={sorted(kl_values)[len(kl_values)//2]:.4f}")
+            median = sorted(kl_values)[len(kl_values) // 2]
+            print(f"  {ex['id']}: median_kl={median:.4f}  n_pairs={len(kl_values)}")
             all_kl.extend(kl_values)
 
     if not all_kl:
-        print("No KL values collected — check canonical runner.")
+        print("No KL values collected — check that run_canonical_circuit returns distributions.")
         return
 
     all_kl.sort()
@@ -771,7 +849,7 @@ def main():
     p95 = all_kl[int(n * 0.95)]
     p99 = all_kl[int(n * 0.99)]
 
-    print(f"\nNoise floor KL distribution (n={n} pairs):")
+    print(f"\nNoise floor KL distribution (n={n} pairs across {len(sample)} examples):")
     print(f"  p50: {p50:.4f}")
     print(f"  p95: {p95:.4f}")
     print(f"  p99: {p99:.4f}")
@@ -779,9 +857,9 @@ def main():
     print(f"\nConfigured tau: {TAU}")
     if p95 > TAU:
         print(f"  WARNING: 95th percentile ({p95:.4f}) exceeds tau ({TAU}). "
-              "Consider raising tau or increasing shots.")
+              "Consider raising tau or increasing shots before the full rescore.")
     else:
-        print(f"  OK: tau={TAU} is above 95th percentile noise floor.")
+        print(f"  OK: tau={TAU} is above the 95th percentile noise floor.")
 
 
 if __name__ == "__main__":
@@ -886,7 +964,12 @@ def compute_suite_hash(suite_path: Path) -> str:
 
 
 def defines_entry_point_fn(generated_code: str, entry_point: str) -> bool:
-    """Return True if generated_code defines a function named entry_point."""
+    """Return True if generated_code defines entry_point as a TOP-LEVEL function.
+
+    Uses tree.body (not ast.walk) to avoid matching nested definitions like:
+        def helper():
+            def create_bell_state(): ...  # nested — not callable from module scope
+    """
     if not entry_point or not generated_code:
         return False
     try:
@@ -894,29 +977,38 @@ def defines_entry_point_fn(generated_code: str, entry_point: str) -> bool:
         return any(
             isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
             and node.name == entry_point
-            for node in ast.walk(tree)
+            for node in tree.body  # top-level only
         )
     except SyntaxError:
         return False
 
 
+def has_toplevel_return(code: str) -> bool:
+    """Return True if code has a top-level return statement (invalid inside a function body)."""
+    try:
+        tree = ast.parse(code)
+        return any(isinstance(node, ast.Return) for node in tree.body)
+    except SyntaxError:
+        return False  # already broken; let the test runner handle it
+
+
 def synthesise_wrapper(generated_code: str, entry_point: str) -> str:
     """Wrap standalone generated_code in a function named entry_point.
 
-    Indents the code and returns the last assigned QuantumCircuit variable.
-    Used for Approach A when the model didn't define the expected function.
+    Inlines the entire generated code into the function body. The function
+    then returns the last QuantumCircuit found in its locals.
+
+    Assumption: generated_code has no top-level return statements (check with
+    has_toplevel_return before calling). Top-level imports are fine — they work
+    inside function bodies. Top-level `return` would make the function invalid.
     """
     indented = "\n".join("    " + line for line in generated_code.splitlines())
     return (
-        f"from qiskit import QuantumCircuit\n"
-        f"{generated_code}\n\n"
+        f"from qiskit import QuantumCircuit\n\n"
         f"def {entry_point}():\n"
-        f"    # synthesised wrapper — code already executed above\n"
-        f"    import inspect, sys\n"
-        f"    frame = sys._getframe(1)\n"
-        f"    _circuits = [v for v in frame.f_locals.values() "
-        f"if hasattr(v, '__class__') and v.__class__.__name__ == 'QuantumCircuit']\n"
-        f"    return _circuits[-1] if _circuits else QuantumCircuit(1)\n"
+        f"{indented}\n"
+        f"    _circuits = [v for v in dict(locals()).values() if isinstance(v, QuantumCircuit)]\n"
+        f"    return _circuits[-1] if _circuits else None\n"
     )
 
 
@@ -988,7 +1080,8 @@ def rescore_file(jsonl_path: Path, suite_index: dict, v11_suite_hash: str) -> Pa
             unit_test_pass = None
             if test_code and generated_code:
                 code_for_test = generated_code
-                if not dep and entry_point:
+                if not dep and entry_point and not has_toplevel_return(generated_code):
+                    # Standalone code — synthesise a wrapper so IBM tests can call entry_point()
                     code_for_test = synthesise_wrapper(generated_code, entry_point)
                 try:
                     ut_result = validate_test_code(code_for_test, test_code, timeout=60)
@@ -1174,8 +1267,14 @@ def load_results(jsonl_path: Path) -> list[dict]:
 
 
 def model_label(path: Path) -> str:
-    """Derive display label from filename."""
+    """Derive display label from filename.
+
+    Handles version dots: `claude-sonnet-4-6` → `Claude Sonnet 4.6`.
+    Pattern: digit-digit sequences become digit.digit before title-casing.
+    """
+    import re
     stem = path.stem.replace("_humaneval", "")
+    stem = re.sub(r"(\d)-(\d)", r"\1.\2", stem)  # 4-6 → 4.6
     return stem.replace("_", " ").replace("-", " ").title()
 
 
@@ -1201,7 +1300,11 @@ def cohens_kappa(mat: dict) -> float:
 
 
 def mcnemar_p(mat: dict) -> float:
-    """McNemar's test p-value (continuity-corrected)."""
+    """McNemar's test p-value (continuity-corrected chi-squared).
+
+    Use for the overall row (n=2,416) where chi-squared is appropriate.
+    Do NOT use for per-model cells where a_only+b_only may be single digits.
+    """
     a_only, b_only = mat["a_only"], mat["b_only"]
     denom = a_only + b_only
     if denom == 0:
@@ -1209,6 +1312,19 @@ def mcnemar_p(mat: dict) -> float:
     chi2 = (abs(a_only - b_only) - 1) ** 2 / denom
     from scipy.stats import chi2 as chi2_dist
     return float(chi2_dist.sf(chi2, 1))
+
+
+def mcnemar_p_exact(mat: dict) -> float:
+    """McNemar's exact binomial test.
+
+    Use for per-model cells where a_only+b_only may be in the single digits.
+    chi-squared is unreliable with small n.
+    """
+    from scipy.stats import binomtest
+    a, b = mat["a_only"], mat["b_only"]
+    if a + b == 0:
+        return 1.0
+    return float(binomtest(min(a, b), a + b, 0.5).pvalue)
 
 
 def pct(k: int, n: int) -> str:
@@ -1250,7 +1366,7 @@ def main():
 
         mat = agreement_matrix(rows)
         kappa = cohens_kappa(mat)
-        p_mcn = mcnemar_p(mat)
+        p_mcn = mcnemar_p_exact(mat)  # exact binomial: per-model a_only+b_only may be tiny
         agree = mat["both_pass"] + mat["both_fail"]
 
         print(
@@ -1301,10 +1417,11 @@ def main():
     r_v10_ut = pearsonr(v10_vals, ut_vals)
     r_v10_kl = pearsonr(v10_vals, kl_vals)
     r_ut_kl = pearsonr(ut_vals, kl_vals)
-    print(f"\n  Per-example Pearson r (n={len(v10_vals)}):")
-    print(f"    v1.0 semantic vs unit_test:  r = {r_v10_ut:.3f}")
-    print(f"    v1.0 semantic vs KL:         r = {r_v10_kl:.3f}")
-    print(f"    unit_test vs KL:             r = {r_ut_kl:.3f}")
+    # For binary outcomes, Pearson r is the phi coefficient (not misleading, but name it correctly)
+    print(f"\n  Per-example phi coefficient (binary Pearson, n={len(v10_vals)}):")
+    print(f"    v1.0 semantic vs unit_test:  φ = {r_v10_ut:.3f}")
+    print(f"    v1.0 semantic vs KL:         φ = {r_v10_kl:.3f}")
+    print(f"    unit_test vs KL:             φ = {r_ut_kl:.3f}")
 
     # --- Save JSON ---
     out = Path("results/v11_analysis.json")
@@ -1313,7 +1430,7 @@ def main():
         "overall_matrix": overall,
         "cohens_kappa": kappa_all,
         "mcnemar_p": p_all,
-        "correlations": {
+        "phi_coefficients": {
             "v10_vs_unit_test": r_v10_ut,
             "v10_vs_kl": r_v10_kl,
             "unit_test_vs_kl": r_ut_kl,
@@ -1423,7 +1540,7 @@ git commit -m "docs: METHODOLOGY.md v1.1 — unit test and KL divergence approac
 - ✅ METHODOLOGY.md v1.1 (Task 9)
 - ✅ QuanBench+ citation verified before use (Task 1)
 
-**Reviewer issues addressed:**
+**Reviewer issues addressed (v2 review):**
 - ✅ Canonical runner calls `entry_point()` — no longer returns `[]`
 - ✅ Generated runner tries `entry_point()` first, falls back to locals scan
 - ✅ Synthesised wrapper for Approach A when model used standalone format
@@ -1433,14 +1550,26 @@ git commit -m "docs: METHODOLOGY.md v1.1 — unit test and KL divergence approac
 - ✅ Multi-register keys normalised (`"".join(k.split())`)
 - ✅ `warnings.filterwarnings` narrowed to `module="qiskit"` only
 - ✅ Dead `IBM_URL` parquet constant removed
-- ✅ Model label derived from filename, not hardcoded dict
 - ✅ Both v1.0 and v1.1 suite hashes recorded in rescore header
 - ✅ Resume-by-task-id in rescore script
 - ✅ Cohen's κ and McNemar's test in analysis
-- ✅ Per-example Pearson (n=2,416) not per-model (n=16)
+- ✅ Per-example phi coefficient (n=2,416) not per-model (n=16)
 - ✅ Calibration task inserted before full rescore
 - ✅ τ verified empirically before use
 
+**Reviewer issues addressed (v3 review):**
+- ✅ Calibration bug fixed: now calls `run_canonical_circuit()` twice with different seeds and computes `kl_divergence(d1, d2)` directly — no longer `abs(0 - 0) = 0`
+- ✅ `run_canonical_circuit()` exposed as a public function in `kl_validator.py`
+- ✅ Calibration uses `random.sample` (fixed seed) instead of first-N — avoids biasing toward 2-qubit circuits
+- ✅ `synthesise_wrapper` inlines code into function body — no longer uses `sys._getframe(1)` which found test locals, not module globals
+- ✅ `has_toplevel_return()` guard added — wrapper only applied when safe to indent
+- ✅ `defines_entry_point_fn` uses `tree.body` not `ast.walk` — no longer matches nested definitions
+- ✅ Pre-flight task (Task 1) includes API check for `validate_test_code` and `generated_code` markdown fence inspection
+- ✅ Per-model McNemar uses exact binomial (`binomtest`) — chi-squared unreliable when `a+b` is single digits
+- ✅ Overall McNemar uses continuity-corrected chi-squared (appropriate for n=2,416)
+- ✅ Model label regex handles version dots: `4-6` → `4.6` via `re.sub(r"(\d)-(\d)", r"\1.\2", ...)`
+- ✅ Binary Pearson correctly named "phi coefficient" in output and saved JSON
+
 **Placeholder scan:** None found.
 
-**Type consistency:** `KLResult.kl_divergence: float | None`, `unit_test_pass: bool | None`, `kl_pass: bool | None`, `defines_entry_point: bool | null` — consistent throughout Tasks 4–8.
+**Type consistency:** `KLResult.kl_divergence: float | None`, `unit_test_pass: bool | None`, `kl_pass: bool | None`, `defines_entry_point: bool` — consistent throughout Tasks 4–8.
