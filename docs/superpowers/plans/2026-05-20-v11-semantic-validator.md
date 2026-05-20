@@ -24,7 +24,7 @@ IBM's `qiskit-community/qiskit-human-eval` dataset fields per problem:
 
 - **Approach B (KL divergence):** The canonical runner must call `entry_point()` to get a circuit — executing `prompt + canonical_solution` at module scope only *defines* the function, never calls it. Without this fix, every reference run returns `[]` and Approach B produces zero passes. Additionally: generated code may not define `entry_point`, so the generated runner must also try calling it if present, falling back to scanning locals for QuantumCircuit objects.
 
-**τ=0.05 and shot count:** QuanBench+ (arXiv:2604.08570) uses KL-divergence-based acceptance. The specific values τ=0.05 and 1024 shots must be verified against the paper text before going into METHODOLOGY.md — the abstract doesn't confirm them. The venue claim ("ICLR 2026 Workshop") also needs verification. Run a calibration task (canonical vs canonical, 20 runs) across the full suite before relying on any fixed τ. For high-qubit circuits with many bins, 1024 shots may produce sampling noise that exceeds 0.05.
+**τ=0.05 and shot count:** QuanBench+ (arXiv:2604.08570, preprint March 2026) uses KL-divergence-based acceptance. The specific values τ=0.05 and 1024 shots must be verified against the paper text before going into METHODOLOGY.md — the abstract doesn't confirm them. Do not claim a venue (e.g. "ICLR 2026 Workshop") without verifying in the paper — cite as "arXiv:2604.08570 (preprint)" unless the paper text says otherwise. Run a calibration task (canonical vs canonical) across the full suite before relying on any fixed τ. For high-qubit circuits with many bins, 1024 shots may produce sampling noise that exceeds 0.05.
 
 **AerSimulator reproducibility:** Set `seed_simulator` in all runner calls so that rescoring the same file twice produces identical KL values.
 
@@ -60,7 +60,20 @@ Two cheap checks before any implementation. Either can block later tasks if they
 .venv/bin/python -c "from quantum_eval.validator import validate_test_code, ValidationLevel; print('OK', ValidationLevel.SEMANTIC.value)"
 ```
 
-Expected: `OK 3` (or whatever the integer value is). If this errors, `validate_test_code` is not yet implemented and Task 6 needs an additional step to add it before the rescore can use it. Do not proceed to Task 6 without this passing.
+Expected: `OK 3` (or whatever the integer value is).
+
+**If this errors:** `validate_test_code` is not yet implemented. Insert Task 1.5 before proceeding:
+
+> **Task 1.5 (conditional): Implement `validate_test_code` in `quantum_eval/validator.py`**
+>
+> Read `validator.py` to understand the existing `validate_example` structure and `ValidationLevel` enum.
+> Add a `validate_test_code(code: str, test_code: str, timeout: int = 60) -> ValidationResult` function
+> that executes `code + "\n" + test_code` in a subprocess and returns a `ValidationResult` with
+> `level_passed=ValidationLevel.SEMANTIC` on success or an error on failure. Mirror the existing
+> subprocess pattern in `validate_example`. Write a test for it in `tests/test_validator.py`.
+> Re-run Step 1 above to confirm it now passes before proceeding to Task 6.
+
+Do not proceed to Task 6 without Step 1 passing.
 
 - [ ] **Step 2: Inspect a stored generated_code field for markdown fences**
 
@@ -645,6 +658,8 @@ def _run_template(template: str, code: str, entry_point: str, shots: int, seed: 
         counts = data["counts"]
         total = data["total"]
         return {k: v / total for k, v in counts.items()}
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("timeout")  # caller sees "timeout" in kl_error vs other errors
     finally:
         tmp.unlink(missing_ok=True)
 
@@ -830,6 +845,10 @@ def main():
             except Exception as e:
                 print(f"  {ex['id']} seed={seed}: FAILED ({e})")
 
+        # Note: these N*(N-1)/2 pairs are not iid — pairs sharing a seed share an empirical
+        # distribution, so a tail sample at seed=0 inflates all four pairs touching it.
+        # Fine for the purpose of confirming tau is in the right ballpark; do not treat
+        # the 300 aggregate pairs as 300 independent observations.
         for i, j in itertools.combinations(seeds, 2):
             if i in distributions and j in distributions:
                 kl_values.append(kl_divergence(distributions[i], distributions[j]))
@@ -876,7 +895,7 @@ This runs ~30 examples × 10 pairs = 300 KL computations. Takes ~10 min.
 
 Expected output example:
 ```
-Calibrating on 30 examples, 5 runs each...
+Calibrating on 30 examples (random sample, seed=42), 5 runs each...
   qiskitHumanEval_0: median_kl=0.0012
   ...
 Noise floor KL distribution (n=300 pairs):
@@ -998,11 +1017,17 @@ def synthesise_wrapper(generated_code: str, entry_point: str) -> str:
     Inlines the entire generated code into the function body. The function
     then returns the last QuantumCircuit found in its locals.
 
-    Assumption: generated_code has no top-level return statements (check with
-    has_toplevel_return before calling). Top-level imports are fine — they work
-    inside function bodies. Top-level `return` would make the function invalid.
+    Assumptions:
+    - generated_code has no top-level return statements (check with has_toplevel_return).
+    - generated_code has no `from __future__` imports (those must be at module top;
+      indenting them into a function body raises SyntaxError). Rare in Qiskit code but
+      screen for it: check `"from __future__" in generated_code` before calling.
+    - Uses expandtabs(4) before indenting to avoid mixing tabs and spaces at adjacent
+      indent levels, which raises TabError in Python 3.
     """
-    indented = "\n".join("    " + line for line in generated_code.splitlines())
+    import textwrap
+    normalised = generated_code.expandtabs(4)
+    indented = textwrap.indent(normalised, "    ")
     return (
         f"from qiskit import QuantumCircuit\n\n"
         f"def {entry_point}():\n"
@@ -1080,7 +1105,9 @@ def rescore_file(jsonl_path: Path, suite_index: dict, v11_suite_hash: str) -> Pa
             unit_test_pass = None
             if test_code and generated_code:
                 code_for_test = generated_code
-                if not dep and entry_point and not has_toplevel_return(generated_code):
+                if (not dep and entry_point
+                        and not has_toplevel_return(generated_code)
+                        and "from __future__" not in generated_code):
                     # Standalone code — synthesise a wrapper so IBM tests can call entry_point()
                     code_for_test = synthesise_wrapper(generated_code, entry_point)
                 try:
@@ -1499,7 +1526,7 @@ with additive smoothing (ε=1e-10).
 Noise-floor calibration (canonical vs canonical, 30 examples, 5 independent runs)
 confirmed the 95th percentile sampling KL is well below τ. See `scripts/calibrate_kl.py`.
 
-Citation: arXiv:2604.08570 (QuanBench+). τ and shot count verified against paper text.
+Citation: arXiv:2604.08570 (QuanBench+, preprint March 2026). τ and shot count verified against paper text. Venue (if any) verified from paper — do not add a venue claim without confirmation.
 
 ### Retroactive comparison
 
@@ -1556,6 +1583,15 @@ git commit -m "docs: METHODOLOGY.md v1.1 — unit test and KL divergence approac
 - ✅ Per-example phi coefficient (n=2,416) not per-model (n=16)
 - ✅ Calibration task inserted before full rescore
 - ✅ τ verified empirically before use
+
+**Reviewer issues addressed (v4 review):**
+- ✅ `validate_test_code` failure branch: explicit Task 1.5 block with implementation instructions if API check fails
+- ✅ `synthesise_wrapper` tab/space hazard: `expandtabs(4)` + `textwrap.indent` instead of string concatenation
+- ✅ `from __future__` guard: call site skips wrapper synthesis when `"from __future__"` present in code
+- ✅ Calibration pairwise correlation: comment added noting 300 pairs are not iid
+- ✅ QuanBench+ venue claim dropped: cite as "preprint" unless paper text confirms venue
+- ✅ Task 5 expected output fixed to match actual print string `"(random sample, seed=42)"`
+- ✅ Timeout differentiation: `except subprocess.TimeoutExpired: raise RuntimeError("timeout")` — produces `kl_error="timeout"` vs other errors in rescore output
 
 **Reviewer issues addressed (v3 review):**
 - ✅ Calibration bug fixed: now calls `run_canonical_circuit()` twice with different seeds and computes `kl_divergence(d1, d2)` directly — no longer `abs(0 - 0) = 0`
