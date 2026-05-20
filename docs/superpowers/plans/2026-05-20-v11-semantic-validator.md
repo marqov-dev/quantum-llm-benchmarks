@@ -69,11 +69,44 @@ Expected: `OK 3` (or whatever the integer value is).
 > Read `validator.py` to understand the existing `validate_example` structure and `ValidationLevel` enum.
 > Add a `validate_test_code(code: str, test_code: str, timeout: int = 60) -> ValidationResult` function
 > that executes `code + "\n" + test_code` in a subprocess and returns a `ValidationResult` with
-> `level_passed=ValidationLevel.SEMANTIC` on success or an error on failure. Mirror the existing
-> subprocess pattern in `validate_example`. Write a test for it in `tests/test_validator.py`.
-> Re-run Step 1 above to confirm it now passes before proceeding to Task 6.
+> `level_passed=ValidationLevel.SEMANTIC` on assertion success.
+>
+> **Critical: raise on subprocess errors, return on assertion failures.** The three-state semantics
+> in the rescore (`unit_test_pass=True/False/None`) depend on this distinction:
+> - If assertions fail (exit code 1, AssertionError in stderr): return `ValidationResult` with a
+>   failed level so the rescore sets `unit_test_pass=False` ("ran and failed").
+> - If the subprocess crashes before reaching assertions (import error, SyntaxError, timeout):
+>   **raise** `RuntimeError` so the rescore catches it and sets `unit_test_pass=None`
+>   ("couldn't evaluate"). This aligns with Approach B's None semantics.
+>
+> Mirror the existing subprocess pattern in `validate_example`. Write a test for it in
+> `tests/test_validator.py` that verifies: (1) valid code + passing test → SEMANTIC, (2) valid code
+> + failing assertion → returns with error (not raises), (3) broken code → raises RuntimeError.
+> Re-run Step 1 above to confirm it passes before proceeding to Task 6.
 
-Do not proceed to Task 6 without Step 1 passing.
+**If Step 1 succeeds**, verify the existing function's raise/return behaviour before trusting it:
+
+```bash
+.venv/bin/python -c "
+from quantum_eval.validator import validate_test_code
+# Should RAISE (subprocess crash before assertions)
+try:
+    validate_test_code('raise RuntimeError(\"boom\")', 'assert True')
+    print('PROBLEM: did not raise on subprocess crash — sets unit_test_pass=False instead of None')
+except Exception as e:
+    print('OK: raises on crash:', type(e).__name__)
+# Should RETURN (code runs but assertion fails)
+try:
+    r = validate_test_code('x = 1', 'assert x == 2')
+    print('OK: returns on assertion failure:', r)
+except Exception as e:
+    print('PROBLEM: raises on assertion failure — sets unit_test_pass=None instead of False:', e)
+"
+```
+
+If the behaviour doesn't match the expected convention, fix `validate_test_code` before proceeding to Task 6. Document the actual behaviour in METHODOLOGY.md.
+
+Do not proceed to Task 6 without Step 1 passing and the raise/return convention confirmed.
 
 - [ ] **Step 2: Inspect a stored generated_code field for markdown fences**
 
@@ -942,7 +975,43 @@ Configured tau: 0.05
 
 If calibration shows p95 > 0.05: either double shots to 2048 and re-run, or set `TAU = 0.10` in `kl_validator.py`. Document the decision and the calibration numbers in METHODOLOGY.md (Task 8). Do NOT proceed to the full rescore with a tau that the noise floor exceeds.
 
-- [ ] **Step 4: Commit calibration script and any tau adjustment**
+- [ ] **Step 4: Canonical sanity pass — run every canonical solution once**
+
+Run all 151 canonical solutions through `run_canonical_circuit` and report failures. If a canonical fails (Qiskit API drift, missing import, etc.), every model gets `kl_pass=None` on that row uniformly — a silent 8–16 hour run would only reveal this in elevated `n_errored`. A 10-minute check now is cheap insurance.
+
+```python
+# scripts/check_canonicals.py (write inline, don't commit)
+import json, sys
+from pathlib import Path
+sys.path.insert(0, ".")
+from quantum_eval.kl_validator import run_canonical_circuit
+
+suite = [json.loads(l) for l in Path("quantum_eval/_data/benchmarks/humaneval/humaneval.jsonl").read_text().splitlines()]
+failures = []
+for ex in suite:
+    ep = ex.get("entry_point", "")
+    cs = ex.get("canonical_solution", "")
+    prompt = ex.get("instruction") or ex.get("prompt", "")
+    if not ep or not cs:
+        continue
+    try:
+        counts = run_canonical_circuit(prompt + cs, entry_point=ep, shots=256, seed=42)
+        assert sum(counts.values()) > 0
+    except Exception as e:
+        failures.append((ex["id"], str(e)[:120]))
+
+print(f"Canonical sanity: {len(suite) - len(failures)}/151 OK, {len(failures)} failed")
+for task_id, err in failures:
+    print(f"  FAIL {task_id}: {err}")
+```
+
+```bash
+.venv/bin/python scripts/check_canonicals.py
+```
+
+Expected: `151/151 OK`. If failures appear, inspect whether they're Qiskit API issues or IBM dataset problems. Do not proceed to the full rescore if more than a handful fail — the analysis will be unreliable.
+
+- [ ] **Step 6: Commit calibration script and any tau adjustment**
 
 ```bash
 git add scripts/calibrate_kl.py
@@ -1415,9 +1484,9 @@ def main():
     all_rows = []
     model_stats = []
 
-    print("\n" + "=" * 105)
-    print(f"{'Model':<38} {'v1.0':>6} {'unit%':>6} {'kl%':>6} {'dep%':>6} {'κ':>6} {'agree':>7} {'p(McN)':>8}")
-    print("=" * 105)
+    print("\n" + "=" * 115)
+    print(f"{'Model':<38} {'v1.0':>6} {'unit%':>6} {'kl%':>6} {'dep%':>6} {'err%':>6} {'κ':>6} {'agree':>7} {'p(McN)':>8}")
+    print("=" * 115)
 
     for fpath in files:
         label = model_label(fpath)
@@ -1433,10 +1502,11 @@ def main():
         kappa = cohens_kappa(mat)
         p_mcn = mcnemar_p_exact(mat)  # exact binomial: per-model a_only+b_only may be tiny
         agree = mat["both_pass"] + mat["both_fail"]
+        n_err = mat["n_errored"]  # rows where ≥1 method couldn't evaluate
 
         print(
             f"{label:<38} {pct(v10, n):>6} {pct(ut, n):>6} {pct(kl, n):>6}"
-            f" {pct(dep, n):>6} {kappa:>6.3f} {pct(agree, mat['n']):>7} {p_mcn:>8.4f}"
+            f" {pct(dep, n):>6} {pct(n_err, n):>6} {kappa:>6.3f} {pct(agree, mat['n']):>7} {p_mcn:>8.4f}"
         )
         all_rows.extend(rows)
         model_stats.append({
@@ -1634,6 +1704,11 @@ git commit -m "docs: METHODOLOGY.md v1.1 — unit test and KL divergence approac
 - ✅ Per-example phi coefficient (n=2,416) not per-model (n=16)
 - ✅ Calibration task inserted before full rescore
 - ✅ τ verified empirically before use
+
+**Reviewer issues addressed (v6 review):**
+- ✅ A/B False asymmetry resolved: Task 1 Step 1 now verifies raise/return convention with a live test; Task 1.5 specifies that `validate_test_code` must raise on subprocess crashes, return on assertion failures — aligning unit_test_pass=None/False semantics with Approach B
+- ✅ Canonical sanity pass (Task 5 Step 4): runs all 151 canonical solutions through `run_canonical_circuit` before the full rescore — catches Qiskit API drift cheaply
+- ✅ Per-model errored counts added to analysis table (`err%` column)
 
 **Reviewer issues addressed (v5 review):**
 - ✅ stdout JSON parsing: reverse-iterate lines to find last valid JSON — survives print() in generated code
