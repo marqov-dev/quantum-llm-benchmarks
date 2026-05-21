@@ -39,16 +39,22 @@ def load_examples(suite_path: Path):
 
 
 def build_canonical_code(ex: dict) -> str:
-    """Build full function definition for the canonical circuit runner.
+    """Return the complete function definition for the canonical circuit runner.
 
-    Prefer extracted_code (the complete function def already in the JSONL).
-    Fall back to prompt + canonical_solution for datasets that have that format.
-    The instruction field is natural-language text, NOT Python — never prepend it.
+    Uses extracted_code from the JSONL, which contains the full runnable function
+    (imports + def line + docstring + body). The instruction field is natural-language
+    text only and must NOT be used to construct Python code.
+
+    Raises ValueError if extracted_code is absent so calibration fails loudly
+    rather than silently producing a broken function body with no def line.
     """
-    if ex.get("extracted_code"):
-        return ex["extracted_code"]
-    prompt = ex.get("prompt", "")
-    return prompt + ex["canonical_solution"]
+    code = ex.get("extracted_code")
+    if code:
+        return code
+    raise ValueError(
+        f"Example {ex.get('id', '?')} has no extracted_code field. "
+        "Cannot construct a runnable function for calibration."
+    )
 
 
 def main():
