@@ -112,3 +112,26 @@ def test_get_header_suite_hash_returns_hash(tmp_path):
 def test_get_header_suite_hash_missing_file(tmp_path):
     out = tmp_path / "nonexistent.jsonl"
     assert get_header_suite_hash(out) is None
+
+
+def test_load_suite_carries_ibm_fields(tmp_path):
+    f = tmp_path / "suite.jsonl"
+    f.write_text(
+        '{"id": "qiskitHumanEval_0", "instruction": "create a Bell state", '
+        '"test_code": "assert qc is not None", '
+        '"canonical_solution": "    qc = QuantumCircuit(2)\\n    return qc", '
+        '"entry_point": "create_bell"}\n'
+    )
+    examples = load_suite(f)
+    assert examples[0].test_code == "assert qc is not None"
+    assert examples[0].canonical_solution == "    qc = QuantumCircuit(2)\n    return qc"
+    assert examples[0].entry_point == "create_bell"
+
+
+def test_load_suite_missing_ibm_fields_are_none(tmp_path):
+    f = tmp_path / "suite.jsonl"
+    f.write_text('{"id": "qiskitHumanEval_0", "instruction": "test"}\n')
+    examples = load_suite(f)
+    assert examples[0].test_code is None
+    assert examples[0].canonical_solution is None
+    assert examples[0].entry_point is None

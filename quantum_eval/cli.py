@@ -122,7 +122,12 @@ def cmd_run(args: argparse.Namespace) -> None:
                     print(f"(retry {attempt + 1}) ", end="", flush=True)
 
         # validate_example returns (ValidationResult, extracted_code)
-        result, extracted_code = validate_example({"response": generated, "category": ex.category})
+        result, extracted_code = validate_example({
+            "response": generated,
+            "category": ex.category,
+            "test_code": ex.test_code,
+            "entry_point": ex.entry_point,
+        })
         # provider_error takes precedence: it tells us why we got empty output.
         error = provider_error or result.error
 

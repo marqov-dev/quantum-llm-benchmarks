@@ -10,6 +10,9 @@ class SuiteExample:
     id: str
     prompt: str
     category: str
+    test_code: str | None = None
+    canonical_solution: str | None = None
+    entry_point: str | None = None
 
 
 def compute_suite_hash(suite_path: Path) -> str:
@@ -34,6 +37,9 @@ def load_suite(suite_path: Path) -> list[SuiteExample]:
                 id=r["id"],
                 prompt=prompt,
                 category=r.get("category", "humaneval"),
+                test_code=r.get("test_code"),
+                canonical_solution=r.get("canonical_solution"),
+                entry_point=r.get("entry_point"),
             ))
     return examples
 
