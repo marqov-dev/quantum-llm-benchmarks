@@ -89,3 +89,75 @@ quantum-llm-benchmarks run --model <model-id> --suite humaneval
 ```
 
 with temperature overridden to 0.0 and the stop sequences above applied. The CLI's `--resume` flag uses ID-based resume with suite hash verification, so interrupted runs can be continued safely.
+
+---
+
+## v1.1 Semantic Validation (in progress)
+
+**Status:** Results from v1.1 are not directly comparable to v1.0.
+
+### Approach A: Unit test execution
+
+Each problem includes hand-authored unit tests from IBM's public dataset
+(`qiskit-community/qiskit-human-eval`).
+The generated code is executed, followed by the unit test assertions, in an
+isolated subprocess with a 60-second timeout.
+
+**Format mismatch:** IBM's tests call a function named `entry_point`. Our prompts
+elicit standalone programs. If `entry_point` is not defined in the generated code,
+a synthesised wrapper is used that runs the standalone code and captures the last
+QuantumCircuit. Results are disaggregated by `defines_entry_point` (whether the
+model happened to define the expected function) in the comparison analysis.
+
+### Approach B: KL divergence on measurement distributions
+
+The generated code and IBM's `canonical_solution` (invoked via `entry_point()`)
+are each run on `AerSimulator` with 1024 shots and a fixed seed
+(`seed_simulator=42`). The KL divergence between output distributions is computed
+with additive smoothing (ε=1e-10).
+
+**Pass criterion:** KL(P_gen ∥ P_ref) < τ = 0.05
+
+Noise-floor calibration (canonical vs canonical, 30 examples, 5 independent runs)
+confirmed the 95th percentile sampling KL is 0.0075, well below τ=0.05.
+See `scripts/calibrate_kl.py`.
+
+**Scope limitation:** Approach B is only applicable to problems where the canonical
+solution returns a `QuantumCircuit` (approximately 13% of the benchmark). For the
+remaining problems (returning Statevectors, Operators, counts dicts, etc.),
+KL divergence records `kl_pass=null` (couldn't evaluate).
+
+Citation: QuanBench+ (arXiv:2604.08570, ICLR 2026 Workshop on "I Can't Believe It's
+Not Better"). τ and shot count follow QuanBench+ methodology (not stated explicitly
+in the paper).
+
+### Retroactive comparison
+
+Both validators were run retroactively on stored `generated_code` from all 16 model
+result sets (2,416 data points). Disagreements are analysed with:
+- Cohen's κ (agreement beyond chance)
+- McNemar's test (asymmetry between A-only and B-only cases)
+- `defines_entry_point` split (isolates format-mismatch effect from genuine disagreement)
+
+**Pass/fail/error semantics:** Each validator records three states: `True` (passed),
+`False` (ran successfully but answer is wrong), `None` (could not evaluate — execution
+error, timeout, or no circuit found). Agreement matrix denominators include only rows
+where both methods produced a definitive result. Error rates are reported separately.
+
+**Known edge case (Approach A):** If generated code contains defensive `assert`
+statements that fail before the IBM test code runs, the result is categorised as
+`unit_test_pass=False` ("test failed") rather than `None` ("couldn't evaluate"),
+because both cases surface as `AssertionError`. This will slightly inflate the False
+bucket for Approach A.
+
+**Partial measurement (Approach B):** If generated code measures fewer qubits than the
+canonical solution, the KL divergence is computed over different key spaces. With
+additive smoothing, this typically produces a high divergence and a `False` result.
+
+### v1.1 leaderboard columns
+
+Two new columns alongside the existing `semantic_pct`:
+- `unit_test_pct` — Approach A pass rate
+- `kl_semantic_pct` — Approach B pass rate
+
+v1.0 `semantic_pct` (execution pass) is retained for continuity.
