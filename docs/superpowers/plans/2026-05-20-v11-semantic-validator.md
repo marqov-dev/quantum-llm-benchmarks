@@ -1011,7 +1011,7 @@ for task_id, err in failures:
 
 Expected: `151/151 OK`. If failures appear, inspect whether they're Qiskit API issues or IBM dataset problems. Do not proceed to the full rescore if more than a handful fail — the analysis will be unreliable.
 
-- [ ] **Step 6: Commit calibration script and any tau adjustment**
+- [ ] **Step 5: Commit calibration script and any tau adjustment**
 
 ```bash
 git add scripts/calibrate_kl.py
@@ -1650,6 +1650,13 @@ result sets (2,416 data points). Disagreements are analysed with:
 `False` (ran successfully but answer is wrong), `None` (could not evaluate — execution
 error, timeout, or no circuit found). Agreement matrix denominators include only rows
 where both methods produced a definitive result. Error rates are reported separately.
+
+**Known edge case (Approach A):** If generated code contains defensive `assert`
+statements that fail before the IBM test code runs, the result is categorised as
+`unit_test_pass=False` ("test failed") rather than `None` ("couldn't evaluate"),
+because both cases surface as `AssertionError`. This will slightly inflate the False
+bucket for Approach A. Signature: if κ between v1.0 semantic and unit_test is
+anomalously low, check whether failing rows have `assert` in `generated_code`.
 
 **Partial measurement:** If generated code measures fewer qubits than the canonical
 solution, the KL divergence is computed over different key spaces. With additive
