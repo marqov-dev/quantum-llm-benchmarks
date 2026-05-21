@@ -602,7 +602,7 @@ def validate_test_code(code: str, test_code: str, timeout: int = 60) -> Validati
             error_lines = stderr.split('\n')[-5:]
             error_msg = '\n'.join(error_lines)[:500]
 
-            # Distinguish assertion failures from runtime errors
+            # Distinguish assertion failures from crashes/import errors
             if 'AssertionError' in stderr:
                 return ValidationResult(
                     valid=False,
@@ -611,20 +611,11 @@ def validate_test_code(code: str, test_code: str, timeout: int = 60) -> Validati
                     execution_time_ms=execution_time
                 )
 
-            return ValidationResult(
-                valid=False,
-                level_passed=ValidationLevel.SYNTAX,
-                error=f"Runtime error:\n{error_msg}",
-                execution_time_ms=execution_time
-            )
+            # Crash or import error → raise so caller sets unit_test_pass=None
+            raise RuntimeError(f"Subprocess crash:\n{error_msg}")
 
         if "__TEST_PASSED__" not in result.stdout:
-            return ValidationResult(
-                valid=False,
-                level_passed=ValidationLevel.EXECUTION,
-                error="Test execution did not complete",
-                execution_time_ms=execution_time
-            )
+            raise RuntimeError("Test execution did not complete (no __TEST_PASSED__ marker)")
 
         return ValidationResult(
             valid=True,
@@ -633,17 +624,11 @@ def validate_test_code(code: str, test_code: str, timeout: int = 60) -> Validati
         )
 
     except subprocess.TimeoutExpired:
-        return ValidationResult(
-            valid=False,
-            level_passed=ValidationLevel.EXECUTION,
-            error=f"Test validation timeout after {timeout}s"
-        )
+        raise RuntimeError(f"Test validation timeout after {timeout}s")
+    except RuntimeError:
+        raise
     except Exception as e:
-        return ValidationResult(
-            valid=False,
-            level_passed=ValidationLevel.EXECUTION,
-            error=f"Test validation error: {str(e)}"
-        )
+        raise RuntimeError(f"Test validation error: {str(e)}")
     finally:
         temp_path.unlink(missing_ok=True)
 
@@ -750,7 +735,15 @@ def validate_example(
         # Prefer test-case-based validation when test_code is available
         test_code = example.get("test_code")
         if test_code:
-            result = validate_test_code(code, test_code, timeout=semantic_timeout)
+            try:
+                result = validate_test_code(code, test_code, timeout=semantic_timeout)
+            except RuntimeError as e:
+                # Subprocess crash or timeout — treat as indeterminate (execution-level pass)
+                result = ValidationResult(
+                    valid=False,
+                    level_passed=ValidationLevel.EXECUTION,
+                    error=f"Test runner error: {e}",
+                )
         else:
             result = validate_semantic(code, category, timeout=semantic_timeout)
         result.warnings = (result.warnings or []) + required_issues + deprecated_issues
