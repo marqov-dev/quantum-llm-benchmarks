@@ -180,19 +180,29 @@ def main():
         print(f"    {label_str}: n={len(subset)}, A-only={a_only}, B-only={b_only}")
 
     # --- Phi coefficients (per-example, binary Pearson) ---
-    # Filter to rows where unit_test_pass is not None (for consistent denominator)
-    valid_rows = [r for r in all_rows if r.get("unit_test_pass") is not None]
-    v10_vals = [1 if r.get("semantic_pass") else 0 for r in valid_rows]
-    ut_vals = [1 if r.get("unit_test_pass") else 0 for r in valid_rows]
-    kl_vals = [1 if r.get("kl_pass") else 0 for r in valid_rows]
+    # Phi coefficients require consistent denominators.
+    # Only use rows where BOTH compared methods produced a definitive result.
+    # Mixing None (couldn't evaluate) with False (evaluated, wrong) is a category error.
 
-    r_v10_ut = pearsonr(v10_vals, ut_vals)
-    r_v10_kl = pearsonr(v10_vals, kl_vals)
-    r_ut_kl = pearsonr(ut_vals, kl_vals)
-    print(f"\n  Per-example phi coefficient (binary Pearson, n={len(valid_rows)}):")
-    print(f"    v1.0 semantic vs unit_test:  φ = {r_v10_ut:.3f}")
-    print(f"    v1.0 semantic vs KL:         φ = {r_v10_kl:.3f}")
-    print(f"    unit_test vs KL:             φ = {r_ut_kl:.3f}")
+    # For v1.0 vs unit_test: require unit_test_pass is not None
+    ut_rows = [r for r in all_rows if r.get("unit_test_pass") is not None]
+    v10_for_ut = [1 if r.get("semantic_pass") else 0 for r in ut_rows]
+    ut_vals = [1 if r.get("unit_test_pass") else 0 for r in ut_rows]
+    r_v10_ut = pearsonr(v10_for_ut, ut_vals)
+
+    # For v1.0 vs KL and unit_test vs KL: require BOTH methods ran
+    kl_rows = [r for r in all_rows
+               if r.get("unit_test_pass") is not None and r.get("kl_pass") is not None]
+    v10_for_kl = [1 if r.get("semantic_pass") else 0 for r in kl_rows]
+    ut_for_kl = [1 if r.get("unit_test_pass") else 0 for r in kl_rows]
+    kl_vals = [1 if r.get("kl_pass") else 0 for r in kl_rows]
+    r_v10_kl = pearsonr(v10_for_kl, kl_vals)
+    r_ut_kl = pearsonr(ut_for_kl, kl_vals)
+
+    print(f"\n  Per-example phi coefficient (binary Pearson):")
+    print(f"    v1.0 semantic vs unit_test:  φ = {r_v10_ut:.3f}  (n={len(ut_rows)})")
+    print(f"    v1.0 semantic vs KL:         φ = {r_v10_kl:.3f}  (n={len(kl_rows)}, both methods evaluable)")
+    print(f"    unit_test vs KL:             φ = {r_ut_kl:.3f}  (n={len(kl_rows)}, both methods evaluable)")
 
     # --- Save JSON ---
     out = Path("results/v11_analysis.json")
@@ -202,9 +212,9 @@ def main():
         "cohens_kappa": kappa_all,
         "mcnemar_p": p_all,
         "phi_coefficients": {
-            "v10_vs_unit_test": r_v10_ut,
-            "v10_vs_kl": r_v10_kl,
-            "unit_test_vs_kl": r_ut_kl,
+            "v10_vs_unit_test": {"phi": r_v10_ut, "n": len(ut_rows)},
+            "v10_vs_kl": {"phi": r_v10_kl, "n": len(kl_rows)},
+            "unit_test_vs_kl": {"phi": r_ut_kl, "n": len(kl_rows)},
         },
     }, indent=2))
     print(f"\nSaved: {out}")
