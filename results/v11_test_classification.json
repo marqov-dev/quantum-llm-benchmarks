@@ -1,0 +1,757 @@
+[
+  {
+    "id": "qiskitHumanEval_0",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_1",
+    "test_class": "behavioral",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_2",
+    "test_class": "behavioral",
+    "output_type": "Statevector"
+  },
+  {
+    "id": "qiskitHumanEval_3",
+    "test_class": "behavioral",
+    "output_type": "Figure"
+  },
+  {
+    "id": "qiskitHumanEval_4",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_5",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_6",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_7",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_8",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_9",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_10",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_11",
+    "test_class": "behavioral",
+    "output_type": "Statevector"
+  },
+  {
+    "id": "qiskitHumanEval_12",
+    "test_class": "behavioral",
+    "output_type": "Operator"
+  },
+  {
+    "id": "qiskitHumanEval_13",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_14",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_15",
+    "test_class": "behavioral",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_16",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_17",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_18",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_19",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_20",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_21",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_22",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_23",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_24",
+    "test_class": "structural",
+    "output_type": "bool"
+  },
+  {
+    "id": "qiskitHumanEval_25",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_26",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_27",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_28",
+    "test_class": "structural",
+    "output_type": "Figure"
+  },
+  {
+    "id": "qiskitHumanEval_29",
+    "test_class": "structural",
+    "output_type": "Figure"
+  },
+  {
+    "id": "qiskitHumanEval_30",
+    "test_class": "structural",
+    "output_type": "Figure"
+  },
+  {
+    "id": "qiskitHumanEval_31",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_32",
+    "test_class": "structural",
+    "output_type": "float"
+  },
+  {
+    "id": "qiskitHumanEval_33",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_34",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_35",
+    "test_class": "structural",
+    "output_type": "PrimitiveJob"
+  },
+  {
+    "id": "qiskitHumanEval_36",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_37",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_38",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_39",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_40",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_41",
+    "test_class": "structural",
+    "output_type": "Operator"
+  },
+  {
+    "id": "qiskitHumanEval_42",
+    "test_class": "structural",
+    "output_type": "Operator"
+  },
+  {
+    "id": "qiskitHumanEval_43",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_44",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_45",
+    "test_class": "structural",
+    "output_type": "Clifford"
+  },
+  {
+    "id": "qiskitHumanEval_46",
+    "test_class": "structural",
+    "output_type": "LinearFunction"
+  },
+  {
+    "id": "qiskitHumanEval_47",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_48",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_49",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_50",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_51",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_52",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_53",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_54",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_55",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_56",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_57",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_58",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_59",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_60",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_61",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_62",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_63",
+    "test_class": "structural",
+    "output_type": "str"
+  },
+  {
+    "id": "qiskitHumanEval_64",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_65",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_66",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_67",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_68",
+    "test_class": "structural",
+    "output_type": "tuple"
+  },
+  {
+    "id": "qiskitHumanEval_69",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_70",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_71",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_72",
+    "test_class": "behavioral",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_73",
+    "test_class": "behavioral",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_74",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_75",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_76",
+    "test_class": "structural",
+    "output_type": "TransformationPass"
+  },
+  {
+    "id": "qiskitHumanEval_77",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_78",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_79",
+    "test_class": "structural",
+    "output_type": "float"
+  },
+  {
+    "id": "qiskitHumanEval_80",
+    "test_class": "structural",
+    "output_type": "float"
+  },
+  {
+    "id": "qiskitHumanEval_81",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_82",
+    "test_class": "behavioral",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_83",
+    "test_class": "structural",
+    "output_type": "tuple"
+  },
+  {
+    "id": "qiskitHumanEval_84",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_85",
+    "test_class": "behavioral",
+    "output_type": "str"
+  },
+  {
+    "id": "qiskitHumanEval_86",
+    "test_class": "structural",
+    "output_type": "tuple"
+  },
+  {
+    "id": "qiskitHumanEval_87",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_88",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_89",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_90",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_91",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_92",
+    "test_class": "behavioral",
+    "output_type": "StabilizerState"
+  },
+  {
+    "id": "qiskitHumanEval_93",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_94",
+    "test_class": "behavioral",
+    "output_type": "str"
+  },
+  {
+    "id": "qiskitHumanEval_95",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_96",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_97",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_98",
+    "test_class": "structural",
+    "output_type": "float"
+  },
+  {
+    "id": "qiskitHumanEval_99",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_100",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_101",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_102",
+    "test_class": "structural",
+    "output_type": "str"
+  },
+  {
+    "id": "qiskitHumanEval_103",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_104",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_105",
+    "test_class": "structural",
+    "output_type": "CNOTDihedral"
+  },
+  {
+    "id": "qiskitHumanEval_106",
+    "test_class": "structural",
+    "output_type": "CNOTDihedral"
+  },
+  {
+    "id": "qiskitHumanEval_107",
+    "test_class": "structural",
+    "output_type": "ScalarOp"
+  },
+  {
+    "id": "qiskitHumanEval_108",
+    "test_class": "structural",
+    "output_type": "Choi"
+  },
+  {
+    "id": "qiskitHumanEval_109",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_110",
+    "test_class": "behavioral",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_111",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_112",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_113",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_114",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_115",
+    "test_class": "structural",
+    "output_type": "Target"
+  },
+  {
+    "id": "qiskitHumanEval_116",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_117",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_118",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_119",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_120",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_121",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_122",
+    "test_class": "interface",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_123",
+    "test_class": "structural",
+    "output_type": "Figure"
+  },
+  {
+    "id": "qiskitHumanEval_124",
+    "test_class": "structural",
+    "output_type": "NoiseModel"
+  },
+  {
+    "id": "qiskitHumanEval_125",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_126",
+    "test_class": "structural",
+    "output_type": "float"
+  },
+  {
+    "id": "qiskitHumanEval_127",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_128",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_129",
+    "test_class": "structural",
+    "output_type": "float"
+  },
+  {
+    "id": "qiskitHumanEval_130",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_131",
+    "test_class": "structural",
+    "output_type": "dict"
+  },
+  {
+    "id": "qiskitHumanEval_132",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_133",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_134",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_135",
+    "test_class": "structural",
+    "output_type": "NoiseModel"
+  },
+  {
+    "id": "qiskitHumanEval_136",
+    "test_class": "structural",
+    "output_type": "DensityMatrix"
+  },
+  {
+    "id": "qiskitHumanEval_137",
+    "test_class": "structural",
+    "output_type": "DensityMatrix"
+  },
+  {
+    "id": "qiskitHumanEval_138",
+    "test_class": "structural",
+    "output_type": "list"
+  },
+  {
+    "id": "qiskitHumanEval_139",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_140",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_141",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_142",
+    "test_class": "structural",
+    "output_type": "DensityMatrix"
+  },
+  {
+    "id": "qiskitHumanEval_143",
+    "test_class": "behavioral",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_144",
+    "test_class": "structural",
+    "output_type": "DensityMatrix"
+  },
+  {
+    "id": "qiskitHumanEval_145",
+    "test_class": "behavioral",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_146",
+    "test_class": "structural",
+    "output_type": "other"
+  },
+  {
+    "id": "qiskitHumanEval_147",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_148",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  },
+  {
+    "id": "qiskitHumanEval_149",
+    "test_class": "structural",
+    "output_type": "str"
+  },
+  {
+    "id": "qiskitHumanEval_150",
+    "test_class": "structural",
+    "output_type": "QuantumCircuit"
+  }
+]
