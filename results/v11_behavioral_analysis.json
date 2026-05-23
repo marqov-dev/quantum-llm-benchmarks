@@ -1,0 +1,367 @@
+{
+  "behavioral_46_stats": {
+    "claude-opus-4-6": {
+      "exec_pass_rate": 73.9,
+      "unit_pass_rate": 100.0,
+      "kl_pass_rate": 60.0,
+      "kl_n": 10,
+      "n": 46
+    },
+    "claude-opus-4-7": {
+      "exec_pass_rate": 91.3,
+      "unit_pass_rate": 100.0,
+      "kl_pass_rate": 60.0,
+      "kl_n": 10,
+      "n": 46
+    },
+    "claude-sonnet-4-6": {
+      "exec_pass_rate": 80.4,
+      "unit_pass_rate": 100.0,
+      "kl_pass_rate": 66.7,
+      "kl_n": 9,
+      "n": 46
+    },
+    "codestral-latest": {
+      "exec_pass_rate": 10.9,
+      "unit_pass_rate": 97.8,
+      "kl_pass_rate": 100.0,
+      "kl_n": 1,
+      "n": 46
+    },
+    "deepseek-v4-flash": {
+      "exec_pass_rate": 41.3,
+      "unit_pass_rate": 95.7,
+      "kl_pass_rate": 33.3,
+      "kl_n": 6,
+      "n": 46
+    },
+    "deepseek-v4-pro": {
+      "exec_pass_rate": 47.8,
+      "unit_pass_rate": 95.7,
+      "kl_pass_rate": 20.0,
+      "kl_n": 5,
+      "n": 46
+    },
+    "gemini-2.5-flash": {
+      "exec_pass_rate": 28.3,
+      "unit_pass_rate": 97.8,
+      "kl_pass_rate": 20.0,
+      "kl_n": 5,
+      "n": 46
+    },
+    "gemini-2.5-pro": {
+      "exec_pass_rate": 41.3,
+      "unit_pass_rate": 82.6,
+      "kl_pass_rate": 50.0,
+      "kl_n": 6,
+      "n": 46
+    },
+    "gemma4_latest": {
+      "exec_pass_rate": 26.1,
+      "unit_pass_rate": 71.7,
+      "kl_pass_rate": 50.0,
+      "kl_n": 4,
+      "n": 46
+    },
+    "meta-llama_llama-4-scout-17b-16e-instruct": {
+      "exec_pass_rate": 8.7,
+      "unit_pass_rate": 100.0,
+      "kl_pass_rate": null,
+      "kl_n": 0,
+      "n": 46
+    },
+    "mistral-large-latest": {
+      "exec_pass_rate": 8.7,
+      "unit_pass_rate": 37.0,
+      "kl_pass_rate": 0.0,
+      "kl_n": 1,
+      "n": 46
+    },
+    "moonshot-v1-8k": {
+      "exec_pass_rate": 17.4,
+      "unit_pass_rate": 95.7,
+      "kl_pass_rate": 33.3,
+      "kl_n": 3,
+      "n": 46
+    },
+    "openai_gpt-oss-120b": {
+      "exec_pass_rate": 19.6,
+      "unit_pass_rate": 97.8,
+      "kl_pass_rate": null,
+      "kl_n": 0,
+      "n": 46
+    },
+    "openai_gpt-oss-20b": {
+      "exec_pass_rate": 19.6,
+      "unit_pass_rate": 91.3,
+      "kl_pass_rate": 33.3,
+      "kl_n": 3,
+      "n": 46
+    },
+    "qwen3-coder-480b-a35b-instruct": {
+      "exec_pass_rate": 39.1,
+      "unit_pass_rate": 100.0,
+      "kl_pass_rate": 60.0,
+      "kl_n": 5,
+      "n": 46
+    },
+    "qwen3-coder-plus": {
+      "exec_pass_rate": 30.4,
+      "unit_pass_rate": 97.8,
+      "kl_pass_rate": 33.3,
+      "kl_n": 3,
+      "n": 46
+    }
+  },
+  "structural_104_stats": {
+    "claude-opus-4-6": {
+      "exec_pass_rate": 59.6,
+      "unit_pass_rate": 96.2,
+      "kl_pass_rate": 85.7,
+      "kl_n": 7,
+      "n": 104
+    },
+    "claude-opus-4-7": {
+      "exec_pass_rate": 66.3,
+      "unit_pass_rate": 99.0,
+      "kl_pass_rate": 62.5,
+      "kl_n": 8,
+      "n": 104
+    },
+    "claude-sonnet-4-6": {
+      "exec_pass_rate": 68.3,
+      "unit_pass_rate": 99.0,
+      "kl_pass_rate": 55.6,
+      "kl_n": 9,
+      "n": 104
+    },
+    "codestral-latest": {
+      "exec_pass_rate": 19.2,
+      "unit_pass_rate": 94.2,
+      "kl_pass_rate": 75.0,
+      "kl_n": 4,
+      "n": 104
+    },
+    "deepseek-v4-flash": {
+      "exec_pass_rate": 27.9,
+      "unit_pass_rate": 94.2,
+      "kl_pass_rate": 66.7,
+      "kl_n": 3,
+      "n": 104
+    },
+    "deepseek-v4-pro": {
+      "exec_pass_rate": 35.6,
+      "unit_pass_rate": 91.3,
+      "kl_pass_rate": 71.4,
+      "kl_n": 7,
+      "n": 104
+    },
+    "gemini-2.5-flash": {
+      "exec_pass_rate": 28.8,
+      "unit_pass_rate": 88.5,
+      "kl_pass_rate": 60.0,
+      "kl_n": 5,
+      "n": 104
+    },
+    "gemini-2.5-pro": {
+      "exec_pass_rate": 35.6,
+      "unit_pass_rate": 82.7,
+      "kl_pass_rate": 66.7,
+      "kl_n": 3,
+      "n": 104
+    },
+    "gemma4_latest": {
+      "exec_pass_rate": 15.4,
+      "unit_pass_rate": 77.9,
+      "kl_pass_rate": 75.0,
+      "kl_n": 4,
+      "n": 104
+    },
+    "meta-llama_llama-4-scout-17b-16e-instruct": {
+      "exec_pass_rate": 7.7,
+      "unit_pass_rate": 91.3,
+      "kl_pass_rate": null,
+      "kl_n": 0,
+      "n": 104
+    },
+    "mistral-large-latest": {
+      "exec_pass_rate": 14.4,
+      "unit_pass_rate": 55.8,
+      "kl_pass_rate": 100.0,
+      "kl_n": 4,
+      "n": 104
+    },
+    "moonshot-v1-8k": {
+      "exec_pass_rate": 17.3,
+      "unit_pass_rate": 96.2,
+      "kl_pass_rate": 80.0,
+      "kl_n": 5,
+      "n": 104
+    },
+    "openai_gpt-oss-120b": {
+      "exec_pass_rate": 26.0,
+      "unit_pass_rate": 96.2,
+      "kl_pass_rate": 100.0,
+      "kl_n": 3,
+      "n": 104
+    },
+    "openai_gpt-oss-20b": {
+      "exec_pass_rate": 17.3,
+      "unit_pass_rate": 74.0,
+      "kl_pass_rate": 80.0,
+      "kl_n": 5,
+      "n": 104
+    },
+    "qwen3-coder-480b-a35b-instruct": {
+      "exec_pass_rate": 37.5,
+      "unit_pass_rate": 95.2,
+      "kl_pass_rate": 100.0,
+      "kl_n": 7,
+      "n": 104
+    },
+    "qwen3-coder-plus": {
+      "exec_pass_rate": 28.8,
+      "unit_pass_rate": 93.3,
+      "kl_pass_rate": 87.5,
+      "kl_n": 8,
+      "n": 104
+    }
+  },
+  "kl_wilson_cis": {
+    "claude-opus-4-6": {
+      "pass_rate": 70.6,
+      "ci_low": 46.9,
+      "ci_high": 86.7,
+      "n": 17,
+      "k": 12
+    },
+    "claude-opus-4-7": {
+      "pass_rate": 61.1,
+      "ci_low": 38.6,
+      "ci_high": 79.7,
+      "n": 18,
+      "k": 11
+    },
+    "claude-sonnet-4-6": {
+      "pass_rate": 61.1,
+      "ci_low": 38.6,
+      "ci_high": 79.7,
+      "n": 18,
+      "k": 11
+    },
+    "codestral-latest": {
+      "pass_rate": 80.0,
+      "ci_low": 37.6,
+      "ci_high": 96.4,
+      "n": 5,
+      "k": 4
+    },
+    "deepseek-v4-flash": {
+      "pass_rate": 44.4,
+      "ci_low": 18.9,
+      "ci_high": 73.3,
+      "n": 9,
+      "k": 4
+    },
+    "deepseek-v4-pro": {
+      "pass_rate": 50.0,
+      "ci_low": 25.4,
+      "ci_high": 74.6,
+      "n": 12,
+      "k": 6
+    },
+    "gemini-2.5-flash": {
+      "pass_rate": 40.0,
+      "ci_low": 16.8,
+      "ci_high": 68.7,
+      "n": 10,
+      "k": 4
+    },
+    "gemini-2.5-pro": {
+      "pass_rate": 55.6,
+      "ci_low": 26.7,
+      "ci_high": 81.1,
+      "n": 9,
+      "k": 5
+    },
+    "gemma4_latest": {
+      "pass_rate": 62.5,
+      "ci_low": 30.6,
+      "ci_high": 86.3,
+      "n": 8,
+      "k": 5
+    },
+    "meta-llama_llama-4-scout-17b-16e-instruct": {
+      "pass_rate": null,
+      "ci_low": null,
+      "ci_high": null,
+      "n": 0,
+      "k": 0
+    },
+    "mistral-large-latest": {
+      "pass_rate": 80.0,
+      "ci_low": 37.6,
+      "ci_high": 96.4,
+      "n": 5,
+      "k": 4
+    },
+    "moonshot-v1-8k": {
+      "pass_rate": 62.5,
+      "ci_low": 30.6,
+      "ci_high": 86.3,
+      "n": 8,
+      "k": 5
+    },
+    "openai_gpt-oss-120b": {
+      "pass_rate": 100.0,
+      "ci_low": 43.8,
+      "ci_high": 100.0,
+      "n": 3,
+      "k": 3
+    },
+    "openai_gpt-oss-20b": {
+      "pass_rate": 62.5,
+      "ci_low": 30.6,
+      "ci_high": 86.3,
+      "n": 8,
+      "k": 5
+    },
+    "qwen3-coder-480b-a35b-instruct": {
+      "pass_rate": 83.3,
+      "ci_low": 55.2,
+      "ci_high": 95.3,
+      "n": 12,
+      "k": 10
+    },
+    "qwen3-coder-plus": {
+      "pass_rate": 72.7,
+      "ci_low": 43.4,
+      "ci_high": 90.3,
+      "n": 11,
+      "k": 8
+    }
+  },
+  "kl_by_class_cis": {
+    "structural": {
+      "pass_rate": 76.8,
+      "ci_low": 66.6,
+      "ci_high": 84.6,
+      "n": 82,
+      "k": 63
+    },
+    "behavioral": {
+      "pass_rate": 47.9,
+      "ci_low": 36.7,
+      "ci_high": 59.3,
+      "n": 71,
+      "k": 34
+    }
+  },
+  "overall_kl_ci": {
+    "pass_rate": 63.4,
+    "ci_low": 55.5,
+    "ci_high": 70.6,
+    "n": 153,
+    "k": 97
+  }
+}
