@@ -1,0 +1,140 @@
+{
+  "model_stats": [
+    {
+      "label": "Claude Opus 4.6",
+      "n": 151,
+      "v10_pct": 62,
+      "unit_test_pct": 97,
+      "kl_pct": 8
+    },
+    {
+      "label": "Claude Opus 4.7",
+      "n": 151,
+      "v10_pct": 72,
+      "unit_test_pct": 99,
+      "kl_pct": 7
+    },
+    {
+      "label": "Claude Sonnet 4.6",
+      "n": 151,
+      "v10_pct": 68,
+      "unit_test_pct": 99,
+      "kl_pct": 7
+    },
+    {
+      "label": "Codestral Latest",
+      "n": 151,
+      "v10_pct": 17,
+      "unit_test_pct": 95,
+      "kl_pct": 3
+    },
+    {
+      "label": "Deepseek V4 Flash",
+      "n": 151,
+      "v10_pct": 30,
+      "unit_test_pct": 95,
+      "kl_pct": 3
+    },
+    {
+      "label": "Deepseek V4 Pro",
+      "n": 151,
+      "v10_pct": 35,
+      "unit_test_pct": 93,
+      "kl_pct": 4
+    },
+    {
+      "label": "Gemini 2.5 Flash",
+      "n": 151,
+      "v10_pct": 28,
+      "unit_test_pct": 91,
+      "kl_pct": 3
+    },
+    {
+      "label": "Gemini 2.5 Pro",
+      "n": 151,
+      "v10_pct": 36,
+      "unit_test_pct": 83,
+      "kl_pct": 3
+    },
+    {
+      "label": "Gemma4 Latest",
+      "n": 151,
+      "v10_pct": 18,
+      "unit_test_pct": 76,
+      "kl_pct": 3
+    },
+    {
+      "label": "Meta Llama Llama 4 Scout 17B 16E Instruct",
+      "n": 151,
+      "v10_pct": 7,
+      "unit_test_pct": 94,
+      "kl_pct": 0
+    },
+    {
+      "label": "Mistral Large Latest",
+      "n": 151,
+      "v10_pct": 13,
+      "unit_test_pct": 50,
+      "kl_pct": 3
+    },
+    {
+      "label": "Moonshot V1.8K",
+      "n": 151,
+      "v10_pct": 17,
+      "unit_test_pct": 95,
+      "kl_pct": 3
+    },
+    {
+      "label": "Openai Gpt Oss 120B",
+      "n": 151,
+      "v10_pct": 23,
+      "unit_test_pct": 97,
+      "kl_pct": 2
+    },
+    {
+      "label": "Openai Gpt Oss 20B",
+      "n": 151,
+      "v10_pct": 18,
+      "unit_test_pct": 79,
+      "kl_pct": 3
+    },
+    {
+      "label": "Qwen3 Coder 480B A35B Instruct",
+      "n": 151,
+      "v10_pct": 37,
+      "unit_test_pct": 97,
+      "kl_pct": 7
+    },
+    {
+      "label": "Qwen3 Coder Plus",
+      "n": 151,
+      "v10_pct": 29,
+      "unit_test_pct": 95,
+      "kl_pct": 5
+    }
+  ],
+  "overall_matrix": {
+    "both_pass": 97,
+    "a_only": 56,
+    "b_only": 0,
+    "both_fail": 0,
+    "n": 153,
+    "n_errored": 2263
+  },
+  "cohens_kappa": 0.0,
+  "mcnemar_p": 1.9867575986578073e-13,
+  "phi_coefficients": {
+    "v10_vs_unit_test": {
+      "phi": 0.0,
+      "n": 2167
+    },
+    "v10_vs_kl": {
+      "phi": 0.0,
+      "n": 153
+    },
+    "unit_test_vs_kl": {
+      "phi": 0.0,
+      "n": 153
+    }
+  }
+}

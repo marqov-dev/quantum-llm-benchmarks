@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use this benchmark, please cite it as below."
+type: software
+title: "quantum-llm-benchmarks: An Open Leaderboard for LLM Quantum Code Generation"
+version: 1.1.0
+date-released: 2026-05-24
+url: "https://github.com/marqov-dev/quantum-llm-benchmarks"
+repository-code: "https://github.com/marqov-dev/quantum-llm-benchmarks"
+license: MIT
+abstract: >
+  An open benchmark evaluating large language models on Qiskit quantum code
+  generation using IBM's 151-problem HumanEval suite. Includes a methodology-locked
+  leaderboard (18 models), two semantic validators (IBM unit tests and KL divergence
+  on measurement distributions), and a static AST classification of test types.
+keywords:
+  - quantum computing
+  - large language models
+  - code generation
+  - benchmarking
+  - Qiskit
+  - evaluation
+authors:
+  - family-names: "Ryan"
+    given-names: "David"
+    email: "davedri@gmail.com"
+
+references:
+  - type: dataset
+    title: "Qiskit HumanEval: An Evaluation Benchmark For Quantum Code Generative Models"
+    authors:
+      - name: "IBM Quantum"
+    url: "https://github.com/qiskit-community/qiskit-human-eval"
+    identifiers:
+      - type: other
+        value: "arXiv:2406.14712"
+  - type: article
+    title: "QuanBench+: A Comprehensive Benchmark for Quantum Code Generation"
+    identifiers:
+      - type: other
+        value: "arXiv:2604.08570"
